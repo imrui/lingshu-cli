@@ -11,7 +11,7 @@
  *   --template=<path>   使用自定义模板路径（默认内置 default）
  */
 
-import { existsSync, mkdirSync, readdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, writeFileSync, readFileSync, renameSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs, parseList } from '../utils/args.mjs';
 import { log, c } from '../utils/log.mjs';
@@ -60,6 +60,21 @@ export default async function init({ args, pkgRoot }) {
   log.step('拷贝模板');
   if (!here) mkdirSync(targetDir, { recursive: true });
   copyTemplate(templatePath, targetDir);
+
+  // _gitignore → .gitignore：npm publish 会把 .gitignore 当 .npmignore 吞掉，
+  // 模板内只能用 _gitignore 入包，init 时复原为真正的 .gitignore。
+  const stowed = join(targetDir, '_gitignore');
+  const real = join(targetDir, '.gitignore');
+  if (existsSync(stowed)) {
+    if (existsSync(real)) {
+      // --here 时目标可能已有 .gitignore，保留用户版本仅清掉 _gitignore
+      log.hint('目标已有 .gitignore，保留之，移除模板带的 _gitignore');
+      rmSync(stowed);
+    } else {
+      renameSync(stowed, real);
+    }
+  }
+
   log.ok('模板已拷贝');
 
   // Step 2: 替换占位符 + 重写 package.json 关键字段

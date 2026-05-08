@@ -34,7 +34,7 @@ npm install -g @ruobai/lingshu
 npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
 
 # 锁定版本
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.4
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.5
 ```
 
 ## 创建新项目

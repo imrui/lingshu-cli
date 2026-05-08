@@ -65,6 +65,19 @@ test('init 创建完整项目结构（默认 baseline-only）', () => {
     assert.ok(existsSync(join(proj, p)), `缺失: ${p}`);
   }
 
+  // 关键回归（v0.2.5）：.gitignore 不能被 npm 吞掉
+  // 内容上必须含通配的肢体仓忽略与 personal 工具产物忽略
+  const gitignore = readFileSync(join(proj, '.gitignore'), 'utf8');
+  assert.match(gitignore, /\*-server\//, '.gitignore 应含肢体仓通配');
+  assert.match(gitignore, /\*-ui\//, '.gitignore 应含肢体仓通配');
+  assert.match(gitignore, /\.cursor\/rules\//, '.gitignore 应忽略 personal 工具产物');
+
+  // _gitignore 不应残留（应已被 rename 为 .gitignore）
+  assert.ok(
+    !existsSync(join(proj, '_gitignore')),
+    '_gitignore 应已被 rename 为 .gitignore，不应残留',
+  );
+
   // 关键回归（v0.2.3）：默认不应生成 personal 工具的产物目录
   for (const personal of [
     '.cursor/rules/lingshu-core.mdc',
