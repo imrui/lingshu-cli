@@ -3,6 +3,9 @@ node_modules/
 *.log
 npm-debug.log*
 
+# npm pack 本地产物
+*.tgz
+
 # 测试产物
 .tmp-test/
 coverage/
