@@ -5,60 +5,56 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Node](https://img.shields.io/node/v/@ruobai/lingshu)](https://nodejs.org)
 
-> AI 原生项目的一键初始化与日常运维工具 | 若白知行出品
+> AI 原生项目的一键初始化与日常运维工具｜若白知行出品
 
 `@ruobai/lingshu` 是 [灵枢架构 (LingShu)](https://github.com/imrui/lingshu-template) 的官方命令行工具，把 7 步手动流程压缩为 1 条命令。
 
 ---
 
-## 🚀 快速开始
+## 1 分钟上手
 
-### 安装
+| 步骤 | 命令 |
+|---|---|
+| 安装 | `npm install -g @ruobai/lingshu` |
+| 验证 | `lingshu --version` |
+| 创建项目 | `lingshu init <name>` |
+| 临时调用（不全装） | `npx @ruobai/lingshu init <name>` |
+
+要求 Node ≥ 18。
+
+---
+
+## 安装
 
 ```bash
 # 推荐：从 npm 公网安装
 npm install -g @ruobai/lingshu
-lingshu --version
 
-# 或 npx 临时运行（不全局安装）
-npx @ruobai/lingshu init <name>
-```
-
-#### 备用：Git+SSH 直装（离线环境/不走 npm 公网时）
-
-```bash
+# 备用：Git+SSH 直装（离线环境/不走 npm 公网时）
 npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
 
-# 锁定指定版本
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.0
+# 锁定版本
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.1
 ```
 
-### 创建新项目
+## 创建新项目
 
 ```bash
-# 请将 your-org 替换为你的 GitHub 组织或用户名
 lingshu init my-lingshu-app \
   --remote=git@github.com:your-org/my-lingshu-app.git \
   --tools=claude-code,codex \
   --limbs="my-lingshu-app-server:git@github.com:your-org/my-lingshu-app-server.git,my-lingshu-app-ui:git@github.com:your-org/my-lingshu-app-ui.git"
 ```
 
-一条命令完成：
-- ✅ 拷贝灵枢模板
-- ✅ 注入项目身份（替换占位符）
-- ✅ 配置基线 AI 工具
-- ✅ 生成基线产物（CLAUDE.md / AGENTS.md）
-- ✅ git init + 设置 remote
-- ✅ 安装 git hooks
-- ✅ 克隆肢体仓
+> 把 `your-org` 替换为你的 GitHub 组织或用户名。
+
+一条命令完成：拷贝模板 → 注入项目身份 → 配置 AI 工具基线 → 生成 `CLAUDE.md / AGENTS.md` → `git init` 与 remote → 安装 git hooks → 克隆肢体仓。
 
 ---
 
-## 📖 命令参考
+## 命令参考
 
 ### `lingshu init <name>`
-
-初始化新项目。
 
 | 选项 | 说明 |
 |------|------|
@@ -102,7 +98,7 @@ lingshu init my-lingshu-app \
 
 ---
 
-## 🤖 支持的 AI 工具
+## 支持的 AI 工具
 
 | 工具 | 适配器 | 默认角色 |
 |------|--------|---------|
@@ -117,65 +113,7 @@ lingshu init my-lingshu-app \
 
 ---
 
-## 🏗️ 项目结构
-
-```
-@ruobai/lingshu/
-├── bin/lingshu.mjs            # CLI 入口
-├── src/
-│   ├── commands/              # 5 个子命令实现
-│   ├── core/                  # 适配器引擎、模板渲染、git 封装
-│   └── utils/                 # 日志、参数解析
-├── templates/default/         # 默认模板（即 lingshu-template 当前状态）
-└── tests/smoke.test.mjs       # 端到端 smoke 测试
-```
-
-零依赖：纯 Node.js 内置模块，要求 Node >= 18。
-
----
-
-## 🧪 开发
-
-```bash
-git clone git@github.com:imrui/lingshu-cli.git
-cd lingshu-cli
-
-npm test            # 运行 smoke 测试
-node bin/lingshu.mjs --help   # 本地试运行
-npm link            # 全局链接，方便调试
-```
-
----
-
-## 🔁 CI 流水线（GitHub Actions）
-
-| Job | 触发 | 作用 |
-|-----|------|------|
-| `test:smoke` | 每次 push / PR | 运行 5 个 smoke 测试 |
-| `test:cli-help` | 每次 push / PR | 验证 CLI 启动（version/help） |
-
-### 分支策略
-
-- **master**：稳定分支，仅通过 PR 合并
-- **feat/***：功能分支
-- **fix/***：修复分支
-- 严禁直推 master（团队约定）
-
-### 版本发布
-
-通过 git tag 锁定版本（不发包）：
-
-```bash
-npm version patch              # 0.2.0 → 0.2.1，自动打 tag
-git push origin master --tags  # 推送 tag
-
-# 团队成员安装指定版本
-npm i -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.1
-```
-
----
-
-## 📜 设计原则
+## 设计原则
 
 1. **零依赖**：纯 Node 内置模块，避免 `node_modules` 膨胀
 2. **跨平台**：兼容 Win / macOS / Linux
@@ -184,7 +122,7 @@ npm i -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.1
 
 ---
 
-## 🛣️ 路线图
+## 路线图
 
 | 命令 | 状态 |
 |------|:---:|
@@ -193,13 +131,49 @@ npm i -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.1
 | `doctor` | ✅ |
 | `tool` | ✅ |
 | `limb` | ✅ |
-| `archive` | 🚧 P3 |
+| `archive` | 🚧 待规划 |
 | `upgrade` | 🚧 待规划 |
 
 ---
 
-## 📄 License
+## 开发与贡献
+
+```bash
+git clone git@github.com:imrui/lingshu-cli.git
+cd lingshu-cli
+
+npm test                       # 运行 5 个 smoke 测试
+node bin/lingshu.mjs --help    # 本地试运行
+npm link                       # 全局链接，方便调试
+```
+
+### 项目结构
+
+```
+@ruobai/lingshu/
+├── bin/lingshu.mjs       # CLI 入口
+├── src/                  # 子命令、适配器引擎、模板渲染、git 封装
+├── templates/default/    # 默认模板（lingshu-template 当前快照）
+└── tests/                # smoke 测试
+```
+
+### CI 流水线
+
+| Job | 触发 | 作用 |
+|-----|------|------|
+| `test` | push / PR | smoke 测试 + CLI 启动检查 |
+| `publish` | push tag `v*.*.*` | npm 发布（含 provenance） |
+
+### 分支与发版
+
+- 稳定分支 `master`，仅通过 PR 合并
+- 功能分支 `feat/*`、修复分支 `fix/*`
+- 发版：`npm version patch|minor|major` 自动 bump + tag，`git push --tags` 触发 CI 发布
+
+---
+
+## License
 
 [MIT](./LICENSE) © 2026 imrui
 
-> 注：CLI 内嵌的模板（`templates/default/`）`package.json` 中 `license` 字段保持 `UNLICENSED` 占位，由通过 `lingshu init` 派生的新项目作者自决。
+> CLI 内嵌的模板（`templates/default/package.json`）`license` 字段保持 `UNLICENSED` 占位，由通过 `lingshu init` 派生的新项目作者自决。

@@ -5,7 +5,7 @@
 
 ---
 
-## 💡 架构宣言 (Manifesto)
+## 架构宣言 (Manifesto)
 
 在 AI 原生工程时代，代码的生成速度已远超人类的维护速度。传统的开发模式正面临"逻辑碎片化"挑战。
 
@@ -16,7 +16,7 @@
 
 ---
 
-## ✨ 核心特性
+## 核心特性
 
 | 特性 | 说明 |
 |------|------|
@@ -29,7 +29,7 @@
 
 ---
 
-## 🤖 AI 工具支持矩阵
+## AI 工具支持矩阵
 
 | 工具 | 产物路径 | 是否入库 | 角色 |
 |------|---------|:---:|------|
@@ -45,11 +45,11 @@
 
 ---
 
-## 📂 目录导航 (Project Structure)
+## 目录导航 (Project Structure)
 
 ```text
 .
-├── .lingshu/                    # 🆕 项目元数据空间（不属于任何 AI 工具）
+├── .lingshu/                    # 项目元数据空间（不属于任何 AI 工具）
 │   ├── config/
 │   │   └── adapters.mjs         # AI 工具适配清单
 │   ├── scripts/
@@ -60,7 +60,7 @@
 │       └── post-merge           # 拉取后自动同步规则
 │
 ├── reference/                   # 真源 (Reference)
-│   ├── rules/                   # 🆕 AI 规则 SSoT
+│   ├── rules/                   # AI 规则 SSoT
 │   │   ├── lingshu-core.md      # 架构核心宪法
 │   │   └── ai-behavior.md       # 智能体行为准则
 │   ├── docs/                    # 静态真理：PRD、契约、架构
@@ -71,8 +71,8 @@
 │       ├── walkthroughs/        # 存证：逻辑决策、代码演练
 │       └── reports/             # 审计：汇总报告、数据库变更
 │
-├── CLAUDE.md                    # 🆕 Claude Code 入口（基线，自动生成）
-├── AGENTS.md                    # 🆕 Codex / 通用 Agents 入口（基线，自动生成）
+├── CLAUDE.md                    # Claude Code 入口（基线，自动生成）
+├── AGENTS.md                    # Codex / 通用 Agents 入口（基线，自动生成）
 │
 ├── .cursor/  .trae/  .qoder/   # AI 工具规则目录（自动生成 / gitignore）
 ├── .agent/                      # Antigravity：rules 自动生成，workflows 入库
@@ -85,9 +85,9 @@
 
 ---
 
-## 🛠️ 快速开始 (Getting Started)
+## 快速开始 (Getting Started)
 
-### ⭐️ 推荐方式：使用 @ruobai/lingshu CLI（一条命令）
+### 推荐方式：使用 @ruobai/lingshu CLI（一条命令）
 
 [@ruobai/lingshu](https://www.npmjs.com/package/@ruobai/lingshu) 是灵枢架构的官方脚手架（若白知行出品），把下方 7 步手动流程压缩为 1 条命令：
 
@@ -104,7 +104,7 @@ lingshu init my-lingshu-app \
 
 详见 [@ruobai/lingshu 安装与命令文档](https://github.com/imrui/lingshu-cli)。
 
-### 🔧 手动接入（高级用户 / CLI 不可用时）
+### 手动接入（高级用户 / CLI 不可用时）
 
 在 GitHub 上创建新空白仓库（如 `my-lingshu-app`），然后：
 
@@ -157,7 +157,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 ---
 
-## ⚙️ 日常工作流
+## 日常工作流
 
 ### 修改 AI 规则（核心流程）
 
@@ -191,7 +191,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 ---
 
-## 🧠 开发流程 (Core Workflow)
+## 开发流程 (Core Workflow)
 
 1. **定策 (Define)**：在 `reference/docs/` 修改功能逻辑或 API 协议
 2. **对齐 (Align)**：若涉及 AI 行为规则，更新 `reference/rules/` 真源
@@ -200,7 +200,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 ---
 
-## 🛡️ 三条核心约定 (Three Rules)
+## 三条核心约定 (Three Rules)
 
 1. **文档先行**：禁止在没有更新中枢文档（`reference/docs/`）的情况下直接修改业务代码
 2. **脑体解耦**：中枢仓严禁提交任何属于肢体仓（`*-server/`、`*-ui/` 等）的业务代码
@@ -208,7 +208,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 ---
 
-## 🚀 演进路线 (Roadmap)
+## 演进路线 (Roadmap)
 
 | 阶段 | 状态 | 目标 |
 |:---:|:---:|------|
@@ -220,7 +220,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 ---
 
-## 📄 License
+## License
 
 [MIT](./LICENSE) © 2026 imrui
 
