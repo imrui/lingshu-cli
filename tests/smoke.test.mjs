@@ -7,7 +7,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, rmSync, existsSync, readFileSync } from 'node:fs';
+import { mkdirSync, rmSync, existsSync, readFileSync, cpSync } from 'node:fs';
 import { join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -108,6 +108,40 @@ test('生成项目可独立通过 sync:check', () => {
     console.error('CHECK STDERR:', r.stderr);
   }
   assert.equal(r.status, 0, '生成项目应通过 sync:check');
+});
+
+test('源路径含 node_modules 时模板仍能正确拷贝（回归 v0.2.1 bug）', () => {
+  // 模拟 npm 全局安装：模板源路径形如
+  //   /usr/lib/node_modules/@ruobai/lingshu/templates/default
+  // 之前 copyTemplate filter 误用绝对路径匹配 'node_modules'，
+  // 导致整个模板树被全部过滤，最终生成空目录。
+  if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
+  mkdirSync(TMP, { recursive: true });
+
+  const fakeInstall = join(TMP, 'node_modules', '@ruobai', 'lingshu');
+  const templateInGlobal = join(fakeInstall, 'templates', 'default');
+  cpSync(join(PKG_ROOT, 'templates/default'), templateInGlobal, { recursive: true });
+  assert.ok(
+    existsSync(join(templateInGlobal, '.lingshu/config/adapters.mjs')),
+    'fixture 准备失败：源路径下 .lingshu/config/adapters.mjs 应存在',
+  );
+
+  const r = runCli([
+    'init', 'global-install-sim',
+    `--template=${templateInGlobal}`,
+    '--no-git', '--no-install-hooks',
+  ]);
+  if (r.status !== 0) {
+    console.error('STDOUT:', r.stdout);
+    console.error('STDERR:', r.stderr);
+  }
+  assert.equal(r.status, 0, '源路径含 node_modules 时 init 不应失败');
+
+  const proj = join(TMP, 'global-install-sim');
+  assert.ok(
+    existsSync(join(proj, '.lingshu/config/adapters.mjs')),
+    '回归断言：模板内的 .lingshu/ 必须被拷贝，不可因祖先路径含 node_modules 而过滤',
+  );
 });
 
 test.after(() => {
