@@ -1,0 +1,41 @@
+# ==========================================
+# 🌀 灵枢架构 — CI 一致性守护 (GitHub Actions)
+# ==========================================
+# 防止 reference/rules/ 真源与基线工具产物（CLAUDE.md / AGENTS.md）发生漂移。
+# 仅校验 baseline 工具，因为只有它们入库；个人偏好工具产物在 .gitignore 中。
+
+name: rules-consistency
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+    paths:
+      - 'reference/rules/**'
+      - '.lingshu/**'
+      - 'CLAUDE.md'
+      - 'AGENTS.md'
+
+jobs:
+  rules-consistency:
+    name: 校验灵枢规则一致性（baseline 工具）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 校验 SSoT 与基线产物一致性
+        run: node .lingshu/scripts/sync-rules.mjs --check --baseline
+
+  doctor:
+    name: 架构健康度体检
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 运行 doctor
+        run: node .lingshu/scripts/doctor.mjs

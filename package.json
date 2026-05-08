@@ -1,0 +1,31 @@
+{
+  "name": "@lingshu/cli",
+  "version": "0.2.0",
+  "description": "灵枢架构 (LingShu) CLI — AI 原生项目脚手架",
+  "type": "module",
+  "bin": {
+    "lingshu": "./bin/lingshu.mjs"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "smoke": "node tests/smoke.test.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "lingshu",
+    "scaffold",
+    "ai",
+    "cursor",
+    "claude-code",
+    "codex"
+  ],
+  "license": "UNLICENSED"
+}

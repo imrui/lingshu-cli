@@ -1,0 +1,59 @@
+# ==========================================
+# 🌀 灵枢架构 (LingShu) 核心忽略规则
+# ==========================================
+
+# --- 肢体仓库 (Sub-repos) ---
+# 灵枢架构采用嵌套克隆模式，此处忽略所有具体的代码实现仓。
+# 所有的业务代码应当由对应的 Server-Group 或 Web-Group 仓库管理。
+*-server/
+*-ui/
+*-backend/
+*-frontend/
+*-web/
+*-app/
+
+# --- 运行环境与依赖 ---
+node_modules/
+__pycache__/
+.venv/
+env/
+.env
+.env.*
+*.log
+
+# --- 系统与 IDE ---
+.DS_Store
+Thumbs.db
+.vscode/
+
+# --- 构建产物 ---
+dist/
+build/
+out/
+*.exe
+*.pyc
+
+# --- 临时文件 ---
+.temp/
+.tmp/
+
+# ==========================================
+# 🤖 AI 工具规则产物（由 reference/rules/ 自动生成）
+# 修改请编辑 reference/rules/ 真源，然后执行 `npm run sync`
+# ==========================================
+#
+# 团队基线工具（入库，保证克隆即用）：
+#   ✅ CLAUDE.md       (Claude Code 项目指令)
+#   ✅ AGENTS.md       (Codex / 通用 Agents 指令)
+#
+# 个人偏好工具（每位开发者本地生成，不污染 git）：
+.cursor/rules/
+.trae/rules/
+.qoder/rules/
+.agent/rules/
+.clinerules/
+.continue/rules/
+
+# Claude Code 本地配置（用户私有，含权限授权等）
+.claude/settings.local.json
+

@@ -1,0 +1,40 @@
+# ==========================================
+# 🌀 @lingshu/cli — GitHub Actions
+# ==========================================
+# 测试阶段：smoke 测试 + CLI 启动检查
+# 不发布到任何包仓库（统一 git+ssh 直装）
+
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+    tags: ['v*.*.*']
+
+jobs:
+  smoke:
+    name: smoke 测试
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 显示 Node 版本
+        run: node --version
+      - name: 运行 smoke 测试
+        run: node --test tests/
+
+  cli-help:
+    name: CLI 启动检查（version/help）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: 验证 --version
+        run: node bin/lingshu.mjs --version
+      - name: 验证 --help
+        run: node bin/lingshu.mjs --help
