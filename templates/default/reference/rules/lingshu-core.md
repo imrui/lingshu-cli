@@ -1,4 +1,4 @@
-# 🌀 灵枢架构核心宪法 (LingShu Constitution)
+# 灵枢架构核心准则 (LingShu Core Principles)
 
 ## 1. 架构拓扑定义 (Architecture Topology)
 本仓库遵循 **LingShu** 架构，实行"逻辑中枢"与"执行肢体"的物理分离。
@@ -6,14 +6,14 @@
 - **🧠 中枢仓 (The Brain)**:
   - **路径**: 当前根目录 `./`
   - **职责**: 定义真理 (Reference)、规则 (Rules)、计划 (Plans) 与审计 (Audit)。
-  - **特征**: 仅追踪文档与配置，**绝不包含**业务源代码。
+  - **特征**: 仅追踪文档与配置，不应包含业务源代码。
 
 - **💪 肢体仓 (The Limbs)**:
   - **路径**: 根目录下的具体工程子目录（通常命名为 `*-server`, `*-ui`, `*-mobile`, `*-web`）。
   - **职责**: 承载具体的业务代码实现。
   - **识别规则**: AI 需自动扫描根目录，识别包含 `.git` (子模块/嵌套仓) 或具体语言配置（如 `pyproject.toml`, `package.json`）的子文件夹作为"肢体"。
 
-## 2. Git 物理隔离铁律 (Strict Git Isolation)
+## 2. Git 物理隔离规则 (Git Isolation Rules)
 由于采用嵌套仓库结构，必须严格遵守以下操作边界：
 
 - **🚫 禁止根目录通配提交**:
@@ -41,9 +41,5 @@
   - Windows 特殊指令: `uv` 相关命令须带 `--link-mode copy --no-install-project`。
 - **Node 环境**: 推荐使用 `npm` 管理依赖与脚本（团队统一标准）。
 - **交互语言**: 始终使用 **简体中文**。
-
----
-
-**"中枢一动，全栈皆通。"**
 
 ---

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 🌀 灵枢 CLI 入口
+ * 灵枢 CLI 入口
  *
  * 用法: lingshu <command> [options]
  *
@@ -26,7 +26,7 @@ const PKG_ROOT = resolve(__dirname, '..');
 const pkg = JSON.parse(readFileSync(resolve(PKG_ROOT, 'package.json'), 'utf8'));
 
 const HELP = `
-🌀 ${pkg.description}  v${pkg.version}
+${pkg.description}  v${pkg.version}
 
 用法:
   lingshu <command> [options]

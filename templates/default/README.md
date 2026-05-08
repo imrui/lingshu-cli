@@ -1,4 +1,4 @@
-# 🌀 灵枢 | LingShu
+# 灵枢 | LingShu
 
 > **中枢一动，全栈皆通。**
 > *The Central Hub Acts, The Full-Stack Synchronizes.*
@@ -21,11 +21,11 @@
 | 特性 | 说明 |
 |------|------|
 | 🧠 **中枢-肢体解耦** | 文档/规则集中于中枢仓，业务代码分散于嵌套肢体仓 |
-| 📜 **规则 SSoT** | 所有 AI 行为规则统一写在 `reference/rules/`，杜绝多副本漂移 |
+| 📜 **规则 SSoT** | 所有 AI 行为规则统一写在 `reference/rules/`，避免多副本漂移 |
 | 🤖 **多 AI 工具适配** | 一处定义，自动分发至 6 大主流 AI 编码工具 |
 | 🌍 **跨平台脚本** | 纯 Node.js 实现，Win/macOS/Linux 通用 |
 | 🛡️ **CI 守护** | GitHub Actions 自动校验真源与产物的一致性 |
-| ⚙️ **零摩擦升级** | `git pull` 后 post-merge hook 自动重新分发规则 |
+| ⚙️ **拉取自动重分发** | `git pull` 后 post-merge hook 自动重新分发规则 |
 
 ---
 
@@ -59,7 +59,7 @@
 │   └── hooks/
 │       └── post-merge           # 拉取后自动同步规则
 │
-├── reference/                   # 灵枢之源（真理来源）
+├── reference/                   # 真源 (Reference)
 │   ├── rules/                   # 🆕 AI 规则 SSoT
 │   │   ├── lingshu-core.md      # 架构核心宪法
 │   │   └── ai-behavior.md       # 智能体行为准则
@@ -191,7 +191,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 ---
 
-## 🧠 开发心法：枢机动作 (Core Workflow)
+## 🧠 开发流程 (Core Workflow)
 
 1. **定策 (Define)**：在 `reference/docs/` 修改功能逻辑或 API 协议
 2. **对齐 (Align)**：若涉及 AI 行为规则，更新 `reference/rules/` 真源
@@ -200,7 +200,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 ---
 
-## 🛡️ 灵枢守则 (Three Commandments)
+## 🛡️ 三条核心约定 (Three Rules)
 
 1. **文档先行**：禁止在没有更新中枢文档（`reference/docs/`）的情况下直接修改业务代码
 2. **脑体解耦**：中枢仓严禁提交任何属于肢体仓（`*-server/`、`*-ui/` 等）的业务代码
@@ -217,10 +217,6 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 | **P2** | ✅ 完成 | [@ruobai/lingshu](https://www.npmjs.com/package/@ruobai/lingshu) 一键脚手架（init / sync / doctor / tool / limb） |
 | **P3** | 📋 待启动 | 文档温度分层 + 自动归档（`lingshu archive`） |
 | **P4** | 📋 待启动 | 模板版本管理（`lingshu upgrade`） |
-
----
-
-**中枢一动，全栈皆通。欢迎来到 AI 原生开发的新纪元。**
 
 ---
 

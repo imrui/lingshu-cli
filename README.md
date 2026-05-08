@@ -1,4 +1,4 @@
-# 🌀 @ruobai/lingshu — 灵枢架构脚手架
+# @ruobai/lingshu — 灵枢架构脚手架
 
 [![npm version](https://img.shields.io/npm/v/@ruobai/lingshu)](https://www.npmjs.com/package/@ruobai/lingshu)
 [![npm downloads](https://img.shields.io/npm/dm/@ruobai/lingshu)](https://www.npmjs.com/package/@ruobai/lingshu)
@@ -175,10 +175,10 @@ npm i -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.1
 
 ---
 
-## 📜 设计哲学
+## 📜 设计原则
 
 1. **零依赖**：纯 Node 内置模块，避免 `node_modules` 膨胀
-2. **跨平台**：Win/macOS/Linux 等价行为
+2. **跨平台**：兼容 Win / macOS / Linux
 3. **薄包装**：CLI 不做模板里 `.lingshu/scripts/` 已能做的事
 4. **可演进**：模板可替换，适配器可扩展
 
@@ -203,7 +203,3 @@ npm i -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.1
 [MIT](./LICENSE) © 2026 imrui
 
 > 注：CLI 内嵌的模板（`templates/default/`）`package.json` 中 `license` 字段保持 `UNLICENSED` 占位，由通过 `lingshu init` 派生的新项目作者自决。
-
----
-
-**中枢一动，全栈皆通。**

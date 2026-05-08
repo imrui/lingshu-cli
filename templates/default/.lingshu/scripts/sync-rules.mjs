@@ -108,7 +108,7 @@ function main() {
   let exitCode = 0;
   let writes = 0, drifts = 0, missing = 0;
 
-  console.log(c.cyan(c.bold('\n🌀 灵枢规则分发')));
+  console.log(c.cyan(c.bold('\n灵枢规则分发')));
   console.log(c.dim(`   模式: ${isCheck ? 'CHECK（仅校验）' : 'SYNC（生成产物）'}`));
   console.log(c.dim(`   根目录: ${ROOT}`));
   console.log(c.dim(`   目标工具: ${targets.join(', ')}\n`));

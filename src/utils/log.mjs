@@ -26,5 +26,5 @@ export const log = {
   step:    (m) => console.log(c.bold(c.cyan(`\n▶ ${m}`))),
   hint:    (m) => console.log(c.dim(`  ${m}`)),
   blank:   () => console.log(''),
-  banner:  (m) => console.log(c.cyan(c.bold(`\n🌀 ${m}\n`))),
+  banner:  (m) => console.log(c.cyan(c.bold(`\n${m}\n`))),
 };

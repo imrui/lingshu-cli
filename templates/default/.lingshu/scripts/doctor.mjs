@@ -26,7 +26,7 @@ const ok    = m => console.log(c.green(`  ✓ ${m}`));
 const warn  = m => { console.log(c.yellow(`  ⚠ ${m}`)); warnings++; };
 const fail  = m => { console.log(c.red  (`  ✗ ${m}`)); errors++; };
 
-console.log(c.cyan(c.bold('\n🌀 灵枢架构健康检查\n')));
+console.log(c.cyan(c.bold('\n灵枢架构健康检查\n')));
 
 // 1. 物理完整性
 console.log(c.cyan('[1/4] 物理完整性'));
