@@ -187,4 +187,12 @@ npm i -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.1
 
 ---
 
+## 📄 License
+
+[MIT](./LICENSE) © 2026 imrui
+
+> 注：CLI 内嵌的模板（`templates/default/`）`package.json` 中 `license` 字段保持 `UNLICENSED` 占位，由通过 `lingshu init` 派生的新项目作者自决。
+
+---
+
 **中枢一动，全栈皆通。**
