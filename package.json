@@ -1,6 +1,6 @@
 {
   "name": "@ruobai/lingshu",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "description": "灵枢架构 CLI — AI 原生项目脚手架 | 若白知行出品",
   "type": "module",
   "bin": {

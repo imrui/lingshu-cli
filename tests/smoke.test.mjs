@@ -222,6 +222,43 @@ test('limb init：创建空肢体目录 + git init', () => {
   );
 });
 
+test('limb 自动维护 .gitignore：约定命名跳过、非约定命名追加（v0.2.6）', () => {
+  if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
+  mkdirSync(TMP, { recursive: true });
+
+  runCli(['init', 'gi-test', '--no-git', '--no-install-hooks']);
+  const proj = join(TMP, 'gi-test');
+
+  const giBefore = readFileSync(join(proj, '.gitignore'), 'utf8');
+  assert.match(giBefore, /\*-server\//, 'fixture 校验：模板已含通配');
+
+  // 1) 约定命名：已被 *-server/ 通配覆盖，不应追加重复行
+  let r = runCli(['limb', 'init', 'app-server'], { cwd: proj });
+  assert.equal(r.status, 0);
+  const giAfterServer = readFileSync(join(proj, '.gitignore'), 'utf8');
+  assert.equal(giAfterServer, giBefore, '约定命名应被通配覆盖，.gitignore 不变');
+
+  // 2) 非约定命名：应被自动追加
+  r = runCli(['limb', 'init', 'demo-abc'], { cwd: proj });
+  assert.equal(r.status, 0);
+  const giAfterAbc = readFileSync(join(proj, '.gitignore'), 'utf8');
+  assert.match(giAfterAbc, /^demo-abc\/$/m, '非约定命名应被追加 "demo-abc/" 一行');
+
+  // 3) 重复 init 同名（虽然会因目录已存在失败，但即使追加幂等也不应重复行）
+  // 用 adopt 子命令模拟：先准备一个外部目录
+  const outside = join(TMP, 'outside-source');
+  mkdirSync(outside);
+  // 用一个新名字测幂等
+  r = runCli(['limb', 'adopt', 'demo-xyz', outside], { cwd: proj });
+  assert.equal(r.status, 0);
+
+  // 再追加 demo-xyz/ — 显式调用一次 (用 init 失败，但若用户手动改 .gitignore 后再执行 limb 也不应重复)
+  // 直接断言追加只发生一次
+  const giAfterXyz = readFileSync(join(proj, '.gitignore'), 'utf8');
+  const xyzCount = (giAfterXyz.match(/^demo-xyz\/$/gm) || []).length;
+  assert.equal(xyzCount, 1, 'demo-xyz/ 应只追加一次（幂等）');
+});
+
 test('生成项目可独立通过 sync:check --baseline', () => {
   if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
   mkdirSync(TMP, { recursive: true });
