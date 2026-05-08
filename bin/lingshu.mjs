@@ -38,7 +38,8 @@ ${pkg.description}  v${pkg.version}
                        示例: lingshu init my-lingshu-app --tools=claude-code,codex
 
   sync                 重新分发规则到本地 AI 工具
-                       选项: --check, --baseline, --only=<tools>
+                       默认: 同步 baseline + 已存在产物的 personal
+                       选项: --check, --baseline, --all, --only=<tools>
 
   doctor               架构健康检查（物理结构 + SSoT 真源 + 一致性）
 
@@ -46,7 +47,11 @@ ${pkg.description}  v${pkg.version}
                        子命令: list | baseline <tool> | personal <tool>
 
   limb <subcmd>        管理肢体仓
-                       子命令: list | add <name> <git-url>
+                       子命令:
+                         list                       列出当前肢体仓
+                         add <name> <git-url>       克隆远程仓
+                         init <name>                创建空肢体（mkdir + git init）
+                         adopt <name> <local-path>  纳入已有本地目录
 
   --version, -v        显示版本
   --help, -h           显示帮助

@@ -102,6 +102,7 @@ export default async function init({ args, pkgRoot }) {
   const result = await distribute({
     projectRoot: targetDir,
     baselineOnly: !allTools,
+    all: allTools,
   });
   log.ok(`已生成 ${result.written.length} 个产物文件`);
   for (const f of result.written) log.hint(`  ${f}`);

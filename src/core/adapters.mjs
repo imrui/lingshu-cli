@@ -77,16 +77,42 @@ export function renderAdapter({ projectRoot, toolName, cfg, sources, dryRun = fa
 
 /**
  * 全量分发（写入磁盘）。
+ *
+ * 选取目标工具的优先级：
+ *   1) tools 显式列表       — 完全按列表（--only=...）
+ *   2) baselineOnly=true     — 仅 baseline（init / sync --baseline）
+ *   3) all=true              — 所有 adapter（sync --all）
+ *   4) 默认（auto）          — baseline 必装 + 已存在产物的 personal 工具
+ *
+ * 第 4 项是常态：用户首次想接入某个 personal 工具，请显式 `--only=<name>` 触发。
+ * 之后该工具产物已存在，下次默认 sync 会自动维护它，不需要再传 --only。
+ *
  * @param {object} options
- * @param {string} options.projectRoot - 灵枢项目根
- * @param {string[]} [options.tools] - 仅同步指定工具（默认全部）
- * @param {boolean} [options.baselineOnly]
- * @param {boolean} [options.check] - 校验模式（不写入，仅返回漂移结果）
- * @returns {Promise<{written: string[], drifted: string[], missing: string[]}>}
+ * @param {string}   options.projectRoot
+ * @param {string[]} [options.tools]
+ * @param {boolean}  [options.baselineOnly]
+ * @param {boolean}  [options.all]
+ * @param {boolean}  [options.check]
  */
-export async function distribute({ projectRoot, tools, baselineOnly, check }) {
+export async function distribute({ projectRoot, tools, baselineOnly, all, check }) {
   const { sources, adapters, baseline } = await loadConfig(projectRoot);
-  const targets = tools ?? (baselineOnly ? baseline : Object.keys(adapters));
+
+  let targets;
+  if (tools) {
+    targets = tools;
+  } else if (baselineOnly) {
+    targets = baseline;
+  } else if (all) {
+    targets = Object.keys(adapters);
+  } else {
+    // auto：baseline + 已有产物的 personal
+    targets = Object.keys(adapters).filter((name) => {
+      if (baseline.includes(name)) return true;
+      const cfg = adapters[name];
+      const productPath = join(projectRoot, cfg.target);
+      return existsSync(productPath);
+    });
+  }
 
   const result = { written: [], drifted: [], missing: [], processed: [] };
 

@@ -12,7 +12,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 export default async function sync({ args }) {
-  const { opts, flags } = parseArgs(args, { booleanFlags: ['check', 'baseline'] });
+  const { opts, flags } = parseArgs(args, { booleanFlags: ['check', 'baseline', 'all'] });
 
   const projectRoot = process.cwd();
   if (!existsSync(join(projectRoot, '.lingshu/config/adapters.mjs'))) {
@@ -24,6 +24,7 @@ export default async function sync({ args }) {
     projectRoot,
     tools,
     baselineOnly: !!flags.baseline,
+    all: !!flags.all,
     check: !!flags.check,
   });
 

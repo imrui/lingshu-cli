@@ -3,10 +3,11 @@
  * 灵枢规则分发脚本
  *
  * 用法：
- *   node .lingshu/scripts/sync-rules.mjs              # 分发到所有工具
- *   node .lingshu/scripts/sync-rules.mjs --check      # 仅校验，不写入（用于 CI）
+ *   node .lingshu/scripts/sync-rules.mjs              # 默认 = baseline + 已存在产物的 personal
+ *   node .lingshu/scripts/sync-rules.mjs --all        # 全部工具
+ *   node .lingshu/scripts/sync-rules.mjs --baseline   # 仅基线
  *   node .lingshu/scripts/sync-rules.mjs --only=cursor,codex   # 仅特定工具
- *   node .lingshu/scripts/sync-rules.mjs --baseline   # 仅基线工具
+ *   node .lingshu/scripts/sync-rules.mjs --check      # 仅校验，不写入（用于 CI）
  *
  * 跨平台：纯 Node.js 内置模块，零依赖。
  */
@@ -23,6 +24,7 @@ const ROOT = resolve(__dirname, '../..');
 const args = process.argv.slice(2);
 const isCheck = args.includes('--check');
 const onlyBaseline = args.includes('--baseline');
+const onlyAll = args.includes('--all');
 const onlyArg = args.find(a => a.startsWith('--only='));
 const onlyTools = onlyArg ? onlyArg.slice('--only='.length).split(',').map(s => s.trim()).filter(Boolean) : null;
 
@@ -100,7 +102,13 @@ function renderAdapter(toolName, cfg) {
 function decideTargets() {
   if (onlyTools) return onlyTools;
   if (onlyBaseline) return baseline;
-  return Object.keys(adapters);
+  if (onlyAll) return Object.keys(adapters);
+  // auto：baseline + 已存在产物的 personal
+  return Object.keys(adapters).filter((name) => {
+    if (baseline.includes(name)) return true;
+    const cfg = adapters[name];
+    return existsSync(join(ROOT, cfg.target));
+  });
 }
 
 function main() {

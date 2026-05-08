@@ -132,6 +132,83 @@ test('init --tools 修改基线列表', () => {
   assert.match(adapters, /baseline = \['cursor', 'claude-code'\]/);
 });
 
+test('sync 默认 auto：仅同步 baseline + 已存在产物的 personal（v0.2.4 行为）', () => {
+  if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
+  mkdirSync(TMP, { recursive: true });
+
+  // init 默认 baseline-only，不会生成 personal 工具产物
+  runCli(['init', 'auto-sync', '--no-git', '--no-install-hooks']);
+  const proj = join(TMP, 'auto-sync');
+
+  // 第一次跑 lingshu sync（默认 auto）→ 不应"主动激活" personal 工具
+  let r = runCli(['sync'], { cwd: proj });
+  assert.equal(r.status, 0);
+  for (const personal of [
+    '.cursor/rules/lingshu-core.mdc',
+    '.trae/rules/lingshu-core.md',
+  ]) {
+    assert.ok(
+      !existsSync(join(proj, personal)),
+      `auto 模式不应主动创建未激活的 personal 工具产物: ${personal}`,
+    );
+  }
+
+  // 显式 --only=cursor 激活一次 cursor
+  r = runCli(['sync', '--only=cursor'], { cwd: proj });
+  assert.equal(r.status, 0);
+  assert.ok(
+    existsSync(join(proj, '.cursor/rules/lingshu-core.mdc')),
+    '--only=cursor 之后应当生成 .cursor 产物',
+  );
+
+  // 再次 lingshu sync（auto），由于 .cursor 已存在 → 应当自动维护它
+  r = runCli(['sync'], { cwd: proj });
+  assert.equal(r.status, 0);
+  assert.ok(
+    existsSync(join(proj, '.cursor/rules/lingshu-core.mdc')),
+    'auto 模式应当持续维护已激活工具',
+  );
+  assert.ok(
+    !existsSync(join(proj, '.trae/rules/lingshu-core.md')),
+    '其它未激活工具仍不应被动激活',
+  );
+});
+
+test('sync --all：显式同步所有工具', () => {
+  if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
+  mkdirSync(TMP, { recursive: true });
+
+  runCli(['init', 'all-sync', '--no-git', '--no-install-hooks']);
+  const proj = join(TMP, 'all-sync');
+
+  const r = runCli(['sync', '--all'], { cwd: proj });
+  assert.equal(r.status, 0);
+  for (const p of [
+    '.cursor/rules/lingshu-core.mdc',
+    '.trae/rules/lingshu-core.md',
+    '.qoder/rules/lingshu-core.md',
+    '.agent/rules/lingshu-core.md',
+  ]) {
+    assert.ok(existsSync(join(proj, p)), `--all 时应生成: ${p}`);
+  }
+});
+
+test('limb init：创建空肢体目录 + git init', () => {
+  if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
+  mkdirSync(TMP, { recursive: true });
+
+  runCli(['init', 'with-limbs', '--no-git', '--no-install-hooks']);
+  const proj = join(TMP, 'with-limbs');
+
+  const r = runCli(['limb', 'init', 'fresh-server'], { cwd: proj });
+  assert.equal(r.status, 0);
+  assert.ok(existsSync(join(proj, 'fresh-server')), '空肢体目录应已创建');
+  assert.ok(
+    existsSync(join(proj, 'fresh-server/.git')),
+    '应在新肢体目录下完成 git init',
+  );
+});
+
 test('生成项目可独立通过 sync:check --baseline', () => {
   if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
   mkdirSync(TMP, { recursive: true });

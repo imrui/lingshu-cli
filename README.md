@@ -34,7 +34,7 @@ npm install -g @ruobai/lingshu
 npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
 
 # 锁定版本
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.3
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.4
 ```
 
 ## 创建新项目
@@ -74,11 +74,15 @@ lingshu init my-lingshu-app \
 
 重新分发规则到本地 AI 工具。
 
+**默认（无参数）= baseline + 已存在产物的 personal 工具**：第一次接入某 personal 工具时显式 `--only=<name>`，之后该工具的产物已存在，sync 默认会自动维护它。
+
 | 选项 | 说明 |
 |------|------|
-| `--check` | 仅校验（CI 模式，不写文件） |
-| `--baseline` | 仅同步基线工具 |
-| `--only=<list>` | 仅同步指定工具 |
+| _(无参数)_ | baseline + 已激活的 personal（推荐日常用） |
+| `--all` | 强制同步全部工具 |
+| `--baseline` | 仅同步基线工具（CLAUDE.md / AGENTS.md） |
+| `--only=<list>` | 仅同步指定工具（首次激活某工具时用） |
+| `--check` | 仅校验（CI 模式，不写文件），与上面任一组合使用 |
 
 ### `lingshu doctor`
 
@@ -97,7 +101,11 @@ lingshu init my-lingshu-app \
 | 子命令 | 说明 |
 |--------|------|
 | `list` | 列出当前肢体仓 |
-| `add <name> <git-url>` | 克隆新肢体仓 |
+| `add <name> <git-url>` | 克隆远程仓库到 `<name>/` |
+| `init <name>` | 创建空肢体目录 `<name>/` 并完成 `git init`（无 remote） |
+| `adopt <name> <local-path>` | 把已有本地目录复制到 `<name>/` 纳入肢体管理 |
+
+> 三个新增子命令覆盖了"远程未建好就先本地起"和"把现有目录纳入"等真实场景。`add` 仍然是远程克隆的快捷方式。
 
 ---
 
