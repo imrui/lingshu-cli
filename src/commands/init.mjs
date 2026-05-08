@@ -21,7 +21,7 @@ import { isGitAvailable, gitInit, git, gitClone } from '../core/git.mjs';
 
 export default async function init({ args, pkgRoot }) {
   const { positionals, opts, flags } = parseArgs(args, {
-    booleanFlags: ['here', 'no-git', 'no-install-hooks'],
+    booleanFlags: ['here', 'no-git', 'no-install-hooks', 'all-tools'],
   });
 
   const projectName = positionals[0];
@@ -62,12 +62,20 @@ export default async function init({ args, pkgRoot }) {
   copyTemplate(templatePath, targetDir);
   log.ok('模板已拷贝');
 
-  // Step 2: 替换占位符
+  // Step 2: 替换占位符 + 重写 package.json 关键字段
   log.step('注入项目身份');
   replacePlaceholders(targetDir, {
     'lingshu-template': finalName,
   });
-  log.ok(`占位符已替换为 ${c.bold(finalName)}`);
+  const pkgPath = join(targetDir, 'package.json');
+  if (existsSync(pkgPath)) {
+    try {
+      const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+      pkg.description = `${finalName} — 灵枢架构项目`;
+      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
+    } catch { /* 解析失败不阻断 init，作者后续手改即可 */ }
+  }
+  log.ok(`项目身份已注入: ${c.bold(finalName)}`);
 
   // Step 3: 配置基线工具（如有 --tools）
   if (opts.tools) {
@@ -88,11 +96,16 @@ export default async function init({ args, pkgRoot }) {
     }
   }
 
-  // Step 4: 重新生成基线产物
-  log.step('生成基线工具产物');
-  const result = await distribute({ projectRoot: targetDir });
+  // Step 4: 生成产物（默认仅 baseline，--all-tools 时包括 personal）
+  const allTools = !!flags['all-tools'];
+  log.step(allTools ? '生成所有工具产物' : '生成基线工具产物');
+  const result = await distribute({
+    projectRoot: targetDir,
+    baselineOnly: !allTools,
+  });
   log.ok(`已生成 ${result.written.length} 个产物文件`);
   for (const f of result.written) log.hint(`  ${f}`);
+  if (!allTools) log.hint(`如需个人工具产物（cursor/trae/...），稍后跑 ${c.bold('lingshu sync')} 或加 ${c.bold('--all-tools')}`);
 
   // Step 5: git init
   if (!flags['no-git']) {

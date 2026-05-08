@@ -34,7 +34,7 @@ npm install -g @ruobai/lingshu
 npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
 
 # 锁定版本
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.2
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.3
 ```
 
 ## 创建新项目
@@ -62,10 +62,13 @@ lingshu init my-lingshu-app \
 | `--here` | 在当前目录初始化（不创建子目录） |
 | `--remote=<url>` | 设置 git remote origin |
 | `--tools=<list>` | 基线工具列表（默认 `claude-code,codex`） |
+| `--all-tools` | 同时生成 personal 工具产物（cursor / trae / qoder / antigravity）；默认不生成，留待开发者本地按需 `lingshu sync` |
 | `--limbs=<list>` | 肢体仓 `name:url,name:url` 格式 |
 | `--no-git` | 跳过 git init |
 | `--no-install-hooks` | 跳过 git hooks 安装 |
 | `--template=<path>` | 自定义模板路径 |
+
+> 默认行为：init 仅生成入库的基线产物（`CLAUDE.md` / `AGENTS.md`）。其它 AI 工具（Cursor / Trae / Qoder / Antigravity）的本地产物，由开发者按需 `lingshu sync` 触发。这样首次 `git status` 干净、不污染仓库。
 
 ### `lingshu sync`
 

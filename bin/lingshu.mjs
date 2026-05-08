@@ -32,8 +32,9 @@ ${pkg.description}  v${pkg.version}
   lingshu <command> [options]
 
 命令:
-  init <name>          初始化新的灵枢项目
-                       选项: --here, --remote=<url>, --tools=<list>, --limbs=<list>
+  init <name>          初始化新的灵枢项目（默认仅生成基线 AI 工具产物）
+                       选项: --here, --remote=<url>, --tools=<list>, --limbs=<list>,
+                             --all-tools（含 personal 工具产物），--no-git, --no-install-hooks
                        示例: lingshu init my-lingshu-app --tools=claude-code,codex
 
   sync                 重新分发规则到本地 AI 工具

@@ -38,7 +38,7 @@ test('CLI 版本号', () => {
   assert.match(r.stdout, /^v\d+\.\d+\.\d+/);
 });
 
-test('init 创建完整项目结构', () => {
+test('init 创建完整项目结构（默认 baseline-only）', () => {
   if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
   mkdirSync(TMP, { recursive: true });
 
@@ -65,13 +65,54 @@ test('init 创建完整项目结构', () => {
     assert.ok(existsSync(join(proj, p)), `缺失: ${p}`);
   }
 
-  // package.json 中的项目名应被替换
+  // 关键回归（v0.2.3）：默认不应生成 personal 工具的产物目录
+  for (const personal of [
+    '.cursor/rules/lingshu-core.mdc',
+    '.trae/rules/lingshu-core.md',
+    '.qoder/rules/lingshu-core.md',
+    '.agent/rules/lingshu-core.md',
+  ]) {
+    assert.ok(
+      !existsSync(join(proj, personal)),
+      `默认不应生成 personal 工具产物: ${personal}（应当通过 lingshu sync 或 --all-tools 明确触发）`,
+    );
+  }
+
+  // package.json：name 与 description 都应被注入项目身份
   const pkg = JSON.parse(readFileSync(join(proj, 'package.json'), 'utf8'));
-  assert.equal(pkg.name, 'demo-lingshu', 'package.json 名称应已替换');
+  assert.equal(pkg.name, 'demo-lingshu', 'package.json name 应已替换');
+  assert.equal(
+    pkg.description,
+    'demo-lingshu — 灵枢架构项目',
+    'package.json description 应被重写为项目级描述',
+  );
 
   // CLAUDE.md 不应再含 lingshu-template
   const claude = readFileSync(join(proj, 'CLAUDE.md'), 'utf8');
   assert.ok(!claude.includes('lingshu-template'), 'CLAUDE.md 不应残留模板名');
+});
+
+test('init --all-tools 仍可生成 personal 工具产物', () => {
+  if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
+  mkdirSync(TMP, { recursive: true });
+
+  const r = runCli([
+    'init', 'all-tools-test',
+    '--all-tools', '--no-git', '--no-install-hooks',
+  ]);
+  assert.equal(r.status, 0);
+
+  const proj = join(TMP, 'all-tools-test');
+  for (const p of [
+    'CLAUDE.md',
+    'AGENTS.md',
+    '.cursor/rules/lingshu-core.mdc',
+    '.trae/rules/lingshu-core.md',
+    '.qoder/rules/lingshu-core.md',
+    '.agent/rules/lingshu-core.md',
+  ]) {
+    assert.ok(existsSync(join(proj, p)), `--all-tools 时应生成: ${p}`);
+  }
 });
 
 test('init --tools 修改基线列表', () => {
@@ -91,23 +132,24 @@ test('init --tools 修改基线列表', () => {
   assert.match(adapters, /baseline = \['cursor', 'claude-code'\]/);
 });
 
-test('生成项目可独立通过 sync:check', () => {
+test('生成项目可独立通过 sync:check --baseline', () => {
   if (existsSync(TMP)) rmSync(TMP, { recursive: true, force: true });
   mkdirSync(TMP, { recursive: true });
 
   runCli(['init', 'check-proj', '--no-git', '--no-install-hooks']);
   const proj = join(TMP, 'check-proj');
 
+  // init 默认 baseline-only，所以校验也限定 baseline
   const r = spawnSync(
     process.execPath,
-    ['.lingshu/scripts/sync-rules.mjs', '--check'],
+    ['.lingshu/scripts/sync-rules.mjs', '--check', '--baseline'],
     { cwd: proj, encoding: 'utf8', env: { ...process.env, NO_COLOR: '1' } },
   );
   if (r.status !== 0) {
     console.error('CHECK STDOUT:', r.stdout);
     console.error('CHECK STDERR:', r.stderr);
   }
-  assert.equal(r.status, 0, '生成项目应通过 sync:check');
+  assert.equal(r.status, 0, '生成项目应通过 sync:check --baseline');
 });
 
 test('源路径含 node_modules 时模板仍能正确拷贝（回归 v0.2.1 bug）', () => {
