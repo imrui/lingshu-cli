@@ -1,19 +1,21 @@
 {
-  "name": "@lingshu/cli",
+  "name": "@ruobai/lingshu",
   "version": "0.2.0",
-  "description": "灵枢架构 (LingShu) CLI — AI 原生项目脚手架",
+  "description": "灵枢架构 CLI — AI 原生项目脚手架 | 若白知行出品",
   "type": "module",
   "bin": {
     "lingshu": "./bin/lingshu.mjs"
   },
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "smoke": "node tests/smoke.test.mjs"
+    "smoke": "node tests/smoke.test.mjs",
+    "prepublishOnly": "npm test"
   },
   "files": [
     "bin",
     "src",
     "templates",
+    "LICENSE",
     "README.md"
   ],
   "engines": {
@@ -21,11 +23,28 @@
   },
   "keywords": [
     "lingshu",
+    "ruobai",
     "scaffold",
-    "ai",
-    "cursor",
+    "ai-native",
     "claude-code",
-    "codex"
+    "codex",
+    "cursor",
+    "agents",
+    "ssot",
+    "monorepo"
   ],
-  "license": "MIT"
+  "author": "imrui (若白知行) <hilo.sky.do@gmail.com>",
+  "homepage": "https://ruobai.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imrui/lingshu-cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/imrui/lingshu-cli/issues"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  }
 }

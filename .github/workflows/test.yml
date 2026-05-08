@@ -1,5 +1,5 @@
 # ==========================================
-# 🌀 @lingshu/cli — GitHub Actions
+# 🌀 @ruobai/lingshu — GitHub Actions
 # ==========================================
 # 测试阶段：smoke 测试 + CLI 启动检查
 # 不发布到任何包仓库（统一 git+ssh 直装）

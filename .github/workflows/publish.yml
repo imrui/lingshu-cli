@@ -1,0 +1,45 @@
+# ==========================================
+# 🌀 @ruobai/lingshu — npm 发布流水线
+# ==========================================
+# 推送 v*.*.* tag 后自动发布到 npm 公网
+# 前置：在仓库 Secrets 中配置 NPM_TOKEN
+#       (npmjs.com → Access Tokens → Granular Token，仅授权 @ruobai/lingshu)
+
+name: publish
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+jobs:
+  publish:
+    name: 发布到 npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # 启用 npm provenance（GitHub Actions 来源证明）
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: 校验 tag 与 package.json 版本一致
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          PKG=$(node -p "require('./package.json').version")
+          if [ "$TAG" != "$PKG" ]; then
+            echo "❌ tag ($TAG) 与 package.json version ($PKG) 不一致"
+            exit 1
+          fi
+          echo "✅ 版本对齐: $PKG"
+
+      - name: 跑 smoke 测试
+        run: npm test
+
+      - name: 发布到 npm（含 provenance 来源证明）
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -87,13 +87,13 @@
 
 ## 🛠️ 快速开始 (Getting Started)
 
-### ⭐️ 推荐方式：使用 @lingshu/cli（一条命令）
+### ⭐️ 推荐方式：使用 @ruobai/lingshu CLI（一条命令）
 
-[@lingshu/cli](https://github.com/imrui/lingshu-cli) 是灵枢架构的官方脚手架，把下方 7 步手动流程压缩为 1 条命令：
+[@ruobai/lingshu](https://www.npmjs.com/package/@ruobai/lingshu) 是灵枢架构的官方脚手架（若白知行出品），把下方 7 步手动流程压缩为 1 条命令：
 
 ```bash
-# 一次性安装（任选其一）
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
+# 一次性安装
+npm install -g @ruobai/lingshu
 
 # 一键创建项目（请将 your-org 替换为你的 GitHub 组织或用户名）
 lingshu init my-lingshu-app \
@@ -102,7 +102,7 @@ lingshu init my-lingshu-app \
   --limbs="my-lingshu-app-server:git@github.com:your-org/my-lingshu-app-server.git,my-lingshu-app-ui:git@github.com:your-org/my-lingshu-app-ui.git"
 ```
 
-详见 [@lingshu/cli 安装与命令文档](https://github.com/imrui/lingshu-cli)。
+详见 [@ruobai/lingshu 安装与命令文档](https://github.com/imrui/lingshu-cli)。
 
 ### 🔧 手动接入（高级用户 / CLI 不可用时）
 
@@ -214,10 +214,18 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 |:---:|:---:|------|
 | **P0** | ✅ 完成 | 中枢-肢体架构 + 多 AI 工具规则副本 |
 | **P1** | ✅ 完成 | 规则 SSoT + 跨平台分发 + CI 守护 |
-| **P2** | ✅ 完成 | [@lingshu/cli](https://github.com/imrui/lingshu-cli) 一键脚手架（init / sync / doctor / tool / limb） |
+| **P2** | ✅ 完成 | [@ruobai/lingshu](https://www.npmjs.com/package/@ruobai/lingshu) 一键脚手架（init / sync / doctor / tool / limb） |
 | **P3** | 📋 待启动 | 文档温度分层 + 自动归档（`lingshu archive`） |
 | **P4** | 📋 待启动 | 模板版本管理（`lingshu upgrade`） |
 
 ---
 
 **中枢一动，全栈皆通。欢迎来到 AI 原生开发的新纪元。**
+
+---
+
+## 📄 License
+
+[MIT](./LICENSE) © 2026 imrui
+
+> 注：本仓库为架构模板。基于本模板派生的新项目可自行选择协议（默认 `templates/default/package.json` 中 `license` 字段为 `UNLICENSED` 占位，由作者自决）。

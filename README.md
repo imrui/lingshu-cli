@@ -1,8 +1,13 @@
-# 🌀 @lingshu/cli — 灵枢架构脚手架
+# 🌀 @ruobai/lingshu — 灵枢架构脚手架
 
-> AI 原生项目的一键初始化与日常运维工具。
+[![npm version](https://img.shields.io/npm/v/@ruobai/lingshu)](https://www.npmjs.com/package/@ruobai/lingshu)
+[![npm downloads](https://img.shields.io/npm/dm/@ruobai/lingshu)](https://www.npmjs.com/package/@ruobai/lingshu)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Node](https://img.shields.io/node/v/@ruobai/lingshu)](https://nodejs.org)
 
-`@lingshu/cli` 是 [灵枢架构 (LingShu)](https://github.com/imrui/lingshu-template) 的官方命令行工具，把 7 步手动流程压缩为 1 条命令。
+> AI 原生项目的一键初始化与日常运维工具 | 若白知行出品
+
+`@ruobai/lingshu` 是 [灵枢架构 (LingShu)](https://github.com/imrui/lingshu-template) 的官方命令行工具，把 7 步手动流程压缩为 1 条命令。
 
 ---
 
@@ -11,16 +16,22 @@
 ### 安装
 
 ```bash
-# Git+SSH 直装（零配置，推荐）
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
+# 推荐：从 npm 公网安装
+npm install -g @ruobai/lingshu
 lingshu --version
 
 # 或 npx 临时运行（不全局安装）
-npx git+ssh://git@github.com/imrui/lingshu-cli.git init <name>
+npx @ruobai/lingshu init <name>
 ```
 
-> 暂不发布到 npm 公网或 GitHub Packages；如需版本固定可用 `#v0.2.0` 锁定 tag：
-> `npm i -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.0`
+#### 备用：Git+SSH 直装（离线环境/不走 npm 公网时）
+
+```bash
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
+
+# 锁定指定版本
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.0
+```
 
 ### 创建新项目
 
@@ -109,7 +120,7 @@ lingshu init my-lingshu-app \
 ## 🏗️ 项目结构
 
 ```
-@lingshu/cli/
+@ruobai/lingshu/
 ├── bin/lingshu.mjs            # CLI 入口
 ├── src/
 │   ├── commands/              # 5 个子命令实现
