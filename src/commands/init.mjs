@@ -11,12 +11,13 @@
  *   --template=<path>   使用自定义模板路径（默认内置 default）
  */
 
-import { existsSync, mkdirSync, readdirSync, writeFileSync, readFileSync, renameSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, renameSync, rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs, parseList } from '../utils/args.mjs';
 import { log, c } from '../utils/log.mjs';
 import { copyTemplate, replacePlaceholders } from '../core/template.mjs';
 import { distribute } from '../core/adapters.mjs';
+import { installHooks } from '../core/hooks.mjs';
 import { isGitAvailable, gitInit, git, gitClone } from '../core/git.mjs';
 
 export default async function init({ args, pkgRoot }) {
@@ -77,51 +78,27 @@ export default async function init({ args, pkgRoot }) {
 
   log.ok('模板已拷贝');
 
-  // Step 2: 替换占位符 + 重写 package.json 关键字段
+  // Step 2: 替换占位符（注入项目身份）
   log.step('注入项目身份');
   replacePlaceholders(targetDir, {
     'lingshu-template': finalName,
   });
-  const pkgPath = join(targetDir, 'package.json');
-  if (existsSync(pkgPath)) {
-    try {
-      const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-      pkg.description = `${finalName} — 灵枢架构项目`;
-      writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf8');
-    } catch { /* 解析失败不阻断 init，作者后续手改即可 */ }
-  }
   log.ok(`项目身份已注入: ${c.bold(finalName)}`);
 
-  // Step 3: 配置基线工具（如有 --tools）
-  if (opts.tools) {
-    log.step('配置基线工具');
-    const tools = parseList(opts.tools);
-    const cfgPath = join(targetDir, '.lingshu/config/adapters.mjs');
-    if (existsSync(cfgPath)) {
-      let content = readFileSync(cfgPath, 'utf8');
-      const re = /export const baseline = \[[^\]]*\];/;
-      const replacement = `export const baseline = [${tools.map(t => `'${t}'`).join(', ')}];`;
-      if (re.test(content)) {
-        content = content.replace(re, replacement);
-        writeFileSync(cfgPath, content, 'utf8');
-        log.ok(`基线工具: ${tools.join(', ')}`);
-      } else {
-        log.warn('未在 adapters.mjs 中找到 baseline 配置，跳过');
-      }
-    }
-  }
-
-  // Step 4: 生成产物（默认仅 baseline，--all-tools 时包括 personal）
+  // Step 3: 生成产物
+  //   默认 baseline-only（claude-code/codex）；--all-tools 含个人工具；--tools 指定集合
   const allTools = !!flags['all-tools'];
-  log.step(allTools ? '生成所有工具产物' : '生成基线工具产物');
-  const result = await distribute({
+  const tools = opts.tools ? parseList(opts.tools) : undefined;
+  log.step(tools ? `生成指定工具产物（${tools.join(', ')}）` : allTools ? '生成所有工具产物' : '生成基线工具产物');
+  const result = distribute({
     projectRoot: targetDir,
-    baselineOnly: !allTools,
-    all: allTools,
+    tools,
+    baselineOnly: !tools && !allTools,
+    all: !tools && allTools,
   });
   log.ok(`已生成 ${result.written.length} 个产物文件`);
   for (const f of result.written) log.hint(`  ${f}`);
-  if (!allTools) log.hint(`如需个人工具产物（cursor/trae/...），稍后跑 ${c.bold('lingshu sync')} 或加 ${c.bold('--all-tools')}`);
+  if (!allTools && !tools) log.hint(`如需个人工具产物（cursor/trae/...），稍后跑 ${c.bold('lingshu sync --only=<tool>')} 或加 ${c.bold('--all-tools')}`);
 
   // Step 5: git init
   if (!flags['no-git']) {
@@ -138,17 +115,12 @@ export default async function init({ args, pkgRoot }) {
     }
   }
 
-  // Step 6: 安装 git hooks
+  // Step 6: 安装 git hooks（内置，无需项目内脚本）
   if (!flags['no-install-hooks']) {
     log.step('安装 git hooks');
-    const hooksScript = join(targetDir, '.lingshu/scripts/install-hooks.mjs');
-    if (existsSync(hooksScript)) {
-      const { spawnSync } = await import('node:child_process');
-      const r = spawnSync(process.execPath, [hooksScript], { cwd: targetDir, stdio: 'inherit' });
-      if (r.status !== 0) log.warn('install-hooks 退出码非 0');
-    } else {
-      log.warn('未找到 install-hooks.mjs，跳过');
-    }
+    const { installed, skipped } = installHooks(targetDir);
+    if (skipped) log.warn('非 git 仓库，跳过 hooks 安装');
+    else log.ok(`已安装 git hooks: ${installed.join(', ')}`);
   }
 
   // Step 7: 拉取肢体仓
@@ -177,8 +149,8 @@ export default async function init({ args, pkgRoot }) {
   log.banner('初始化完成');
   console.log(c.dim('下一步:'));
   if (!here) console.log(`  cd ${finalName}`);
-  console.log('  npm install            # 安装依赖（含 hooks 自动安装）');
-  console.log('  npm run doctor         # 健康检查');
+  console.log('  lingshu doctor              # 健康检查');
+  console.log('  lingshu sync                # 重新分发规则到本地 AI 工具');
   console.log('  git push -u origin master   # 推送到远程（如已设置 remote）');
   log.blank();
 }

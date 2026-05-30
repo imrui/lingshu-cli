@@ -8,8 +8,10 @@
  *   init <name>       初始化新的灵枢项目
  *   sync              重新分发规则到本地 AI 工具
  *   doctor            架构健康检查
- *   tool <subcmd>     管理 AI 工具支持（list/baseline/personal）
+ *   tool <subcmd>     管理 AI 工具支持（list/track/untrack）
  *   limb <subcmd>     管理肢体仓（list/add）
+ *   hooks <subcmd>    安装 git hooks（install）
+ *   upgrade           迁移存量项目到 v0.3 零侵入结构
  *   --version, -v     显示版本
  *   --help, -h        显示帮助
  */
@@ -43,8 +45,8 @@ ${pkg.description}  v${pkg.version}
 
   doctor               架构健康检查（物理结构 + SSoT 真源 + 一致性）
 
-  tool <subcmd>        管理 AI 工具支持
-                       子命令: list | baseline <tool> | personal <tool>
+  tool <subcmd>        管理 AI 工具产物的 git 追踪状态
+                       子命令: list | track <tool> | untrack <tool>
 
   limb <subcmd>        管理肢体仓
                        子命令:
@@ -52,6 +54,12 @@ ${pkg.description}  v${pkg.version}
                          add <name> <git-url>       克隆远程仓
                          init <name>                创建空肢体（mkdir + git init）
                          adopt <name> <local-path>  纳入已有本地目录
+
+  hooks <subcmd>       安装灵枢 git hooks
+                       子命令: install
+
+  upgrade              将存量项目迁移到 v0.3 零侵入结构
+                       选项: --dry-run（仅预览）, --force
 
   --version, -v        显示版本
   --help, -h           显示帮助
@@ -65,6 +73,8 @@ const COMMANDS = {
   doctor: () => import('../src/commands/doctor.mjs'),
   tool: () => import('../src/commands/tool.mjs'),
   limb: () => import('../src/commands/limb.mjs'),
+  hooks: () => import('../src/commands/hooks.mjs'),
+  upgrade: () => import('../src/commands/upgrade.mjs'),
 };
 
 async function main() {

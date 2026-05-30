@@ -26,8 +26,6 @@ export default async function doctor() {
     'reference/management/tasks',
     'reference/management/walkthroughs',
     'reference/management/reports',
-    '.lingshu/scripts',
-    '.lingshu/config',
   ];
   for (const d of requiredDirs) {
     if (existsSync(join(root, d))) ok(d);

@@ -1,26 +1,23 @@
 /**
  * lingshu sync [options]
  *
- * 在当前灵枢项目目录执行规则分发。
- * 等价于 npm run sync，但提供统一的 CLI 入口。
+ * 在当前灵枢项目目录执行规则分发（零配置：读内置注册表 + reference/rules/）。
  */
 
 import { parseArgs, parseList } from '../utils/args.mjs';
 import { log, c } from '../utils/log.mjs';
-import { distribute } from '../core/adapters.mjs';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { distribute, isLingshuProject } from '../core/adapters.mjs';
 
 export default async function sync({ args }) {
   const { opts, flags } = parseArgs(args, { booleanFlags: ['check', 'baseline', 'all'] });
 
   const projectRoot = process.cwd();
-  if (!existsSync(join(projectRoot, '.lingshu/config/adapters.mjs'))) {
-    throw new Error('当前目录不是灵枢项目（未找到 .lingshu/config/adapters.mjs）');
+  if (!isLingshuProject(projectRoot)) {
+    throw new Error('当前目录不是灵枢项目（未找到 reference/rules/）');
   }
 
   const tools = opts.only ? parseList(opts.only) : undefined;
-  const result = await distribute({
+  const result = distribute({
     projectRoot,
     tools,
     baselineOnly: !!flags.baseline,
