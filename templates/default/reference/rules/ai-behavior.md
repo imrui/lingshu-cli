@@ -1,3 +1,11 @@
+---
+order: 2
+name: ai-behavior
+description: 灵枢智能体行为准则：Plan 模式存档、真理同步流与原子化交付
+globs: **/*
+trigger: always_on
+---
+
 # 🤖 灵枢智能体行为准则 (Agentic Workflow)
 
 ## 1. 思考模式：真理驱动 (Truth Driven)

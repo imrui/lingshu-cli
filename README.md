@@ -9,6 +9,8 @@
 
 `@ruobai/lingshu` 是 [灵枢架构 (LingShu)](https://github.com/imrui/lingshu-template) 的官方命令行工具，把 7 步手动流程压缩为 1 条命令。
 
+> **v0.3 零侵入**：同步引擎完全内置于本 CLI，派生仓**不再携带** `.lingshu/` 目录与 `package.json`——只保留 `reference/` 治理资产与 AI 工具产物。存量项目可用 `lingshu upgrade` 一键迁移。
+
 ---
 
 ## 1 分钟上手
@@ -34,8 +36,10 @@ npm install -g @ruobai/lingshu
 npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
 
 # 锁定版本
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.2.6
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.3.0
 ```
+
+> 团队协作提示：v0.3 起派生仓不含 `package.json`，同步统一走全局 `lingshu sync`。**团队每位成员各全局安装一次**即可；CI 用 `npx -y @ruobai/lingshu` 临时调用。
 
 ## 创建新项目
 
@@ -48,7 +52,7 @@ lingshu init my-lingshu-app \
 
 > 把 `your-org` 替换为你的 GitHub 组织或用户名。
 
-一条命令完成：拷贝模板 → 注入项目身份 → 配置 AI 工具基线 → 生成 `CLAUDE.md / AGENTS.md` → `git init` 与 remote → 安装 git hooks → 克隆肢体仓。
+一条命令完成：拷贝模板 → 注入项目身份 → 生成 `CLAUDE.md / AGENTS.md` → `git init` 与 remote → 安装 git hooks（内置写入 `.git/hooks/`）→ 克隆肢体仓。
 
 ---
 
@@ -61,7 +65,7 @@ lingshu init my-lingshu-app \
 | `<name>` | 项目目录名（位置参数） |
 | `--here` | 在当前目录初始化（不创建子目录） |
 | `--remote=<url>` | 设置 git remote origin |
-| `--tools=<list>` | 基线工具列表（默认 `claude-code,codex`） |
+| `--tools=<list>` | 指定生成哪些工具的产物（默认基线 `claude-code,codex`） |
 | `--all-tools` | 同时生成 personal 工具产物（cursor / trae / qoder / antigravity）；默认不生成，留待开发者本地按需 `lingshu sync` |
 | `--limbs=<list>` | 肢体仓 `name:url,name:url` 格式 |
 | `--no-git` | 跳过 git init |
@@ -90,11 +94,13 @@ lingshu init my-lingshu-app \
 
 ### `lingshu tool <subcmd>`
 
+管理「某工具产物是否入 git」。v0.3 起 `.gitignore` 本身就是唯一真相，子命令直接增删它。
+
 | 子命令 | 说明 |
 |--------|------|
-| `list` | 列出所有适配器及状态 |
-| `baseline <tool>` | 将工具改为基线（产物入库） |
-| `personal <tool>` | 将工具改为个人（产物 gitignore） |
+| `list` | 列出所有内置工具及其追踪状态（tracked / ignored） |
+| `track <tool>` | 让该工具产物入库（从 `.gitignore` 移除其忽略规则） |
+| `untrack <tool>` | 让该工具产物不入库（向 `.gitignore` 追加其忽略规则） |
 
 ### `lingshu limb <subcmd>`
 
@@ -105,7 +111,26 @@ lingshu init my-lingshu-app \
 | `init <name>` | 创建空肢体目录 `<name>/` 并完成 `git init`（无 remote） |
 | `adopt <name> <local-path>` | 把已有本地目录复制到 `<name>/` 纳入肢体管理 |
 
-> 三个新增子命令覆盖了"远程未建好就先本地起"和"把现有目录纳入"等真实场景。`add` 仍然是远程克隆的快捷方式。
+> 三个子命令覆盖了"远程未建好就先本地起"和"把现有目录纳入"等真实场景。`add` 仍然是远程克隆的快捷方式。
+
+### `lingshu hooks <subcmd>`
+
+| 子命令 | 说明 |
+|--------|------|
+| `install` | 在当前项目安装内置 git hooks（`post-merge`：`git pull` 后自动 `lingshu sync`）。`init` 时已自动安装，本命令供存量项目补装 |
+
+### `lingshu upgrade`
+
+把存量项目迁移到 v0.3 零侵入结构。
+
+| 选项 | 说明 |
+|------|------|
+| _(无参数)_ | 执行迁移 |
+| `--dry-run` | 仅预览将执行的动作，不写盘 |
+| `--force` | 即使检测到风险（如 `package.json` 含业务依赖）也继续 |
+
+- **v0.2.x → v0.3**：删除 `.lingshu/`、删除/瘦身 `package.json`、把原 `adapters.mjs` 的 cursor frontmatter 迁入 `reference/rules/*.md`、改造 CI 为 `npx`、重装 hooks、重生成基线产物。
+- **灵枢 1.0**（规则散落在产物、无 `reference/rules/` 真源）：无法无损自动迁移，给出明确的手动迁移指引。
 
 ---
 
@@ -120,7 +145,7 @@ lingshu init my-lingshu-app \
 | Qoder | `.qoder/rules/*.md` | 个人 |
 | Antigravity | `.agent/rules/*.md` | 个人 |
 
-新增工具：编辑生成项目的 `.lingshu/config/adapters.mjs` 即可。
+内置 6 大工具开箱即用，无需任何配置。若需接入未内置的工具，可在项目的 `reference/.lingshu.json` 声明自定义适配器（可选逃生舱）。
 
 ---
 
@@ -128,8 +153,8 @@ lingshu init my-lingshu-app \
 
 1. **零依赖**：纯 Node 内置模块，避免 `node_modules` 膨胀
 2. **跨平台**：兼容 Win / macOS / Linux
-3. **薄包装**：CLI 不做模板里 `.lingshu/scripts/` 已能做的事
-4. **可演进**：模板可替换，适配器可扩展
+3. **零侵入**：同步引擎在 CLI 内，派生仓只留治理资产，不背引擎与 `package.json`
+4. **可演进**：模板可替换，适配器内置可扩展
 
 ---
 
@@ -140,10 +165,11 @@ lingshu init my-lingshu-app \
 | `init` | ✅ |
 | `sync` | ✅ |
 | `doctor` | ✅ |
-| `tool` | ✅ |
+| `tool`（track/untrack） | ✅ |
 | `limb` | ✅ |
+| `hooks` | ✅ |
+| `upgrade` | ✅ |
 | `archive` | 🚧 待规划 |
-| `upgrade` | 🚧 待规划 |
 
 ---
 
@@ -153,7 +179,7 @@ lingshu init my-lingshu-app \
 git clone git@github.com:imrui/lingshu-cli.git
 cd lingshu-cli
 
-npm test                       # 运行 5 个 smoke 测试
+npm test                       # 运行 smoke 测试（17 项）
 node bin/lingshu.mjs --help    # 本地试运行
 npm link                       # 全局链接，方便调试
 ```
@@ -187,4 +213,4 @@ npm link                       # 全局链接，方便调试
 
 [MIT](./LICENSE) © 2026 imrui
 
-> CLI 内嵌的模板（`templates/default/package.json`）`license` 字段保持 `UNLICENSED` 占位，由通过 `lingshu init` 派生的新项目作者自决。
+> 本 CLI 以 MIT 协议开源。通过 `lingshu init` 派生的新项目不含任何脚手架 `package.json`，协议由项目作者自决。

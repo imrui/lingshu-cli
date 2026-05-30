@@ -1,3 +1,11 @@
+---
+order: 1
+name: lingshu-core
+description: 灵枢架构核心准则：脑体解耦、Git 物理隔离与路径映射
+globs: **/*
+trigger: always_on
+---
+
 # 灵枢架构核心准则 (LingShu Core Principles)
 
 ## 1. 架构拓扑定义 (Architecture Topology)
@@ -18,7 +26,7 @@
 
 - **🚫 禁止根目录通配提交**:
   - **严禁** 在根目录执行 `git add .` 或 `git commit -a`，这会导致肢体仓的代码被错误地纳入中枢仓版本控制。
-  - 根目录 Git **仅允许** 追踪：`reference/`, `.lingshu/`, AI 工具基线产物（`CLAUDE.md`, `AGENTS.md`），以及 `reference/management/` 下的任务文档。
+  - 根目录 Git **仅允许** 追踪：`reference/`, AI 工具基线产物（`CLAUDE.md`, `AGENTS.md`），以及 `reference/management/` 下的任务文档。
 
 - **✅ 肢体仓独立提交**:
   - 修改具体业务代码后，必须显式 `cd [limb-folder_name]/` 进入子目录。
@@ -31,8 +39,8 @@
 ## 3. 规则真源约束 (SSoT for Rules)
 
 - **真源唯一**: 所有 AI 行为规则的真源位于 `reference/rules/`。
-- **产物只读**: `.cursor/rules/`、`.trae/rules/`、`.qoder/rules/`、`.agent/rules/`、`CLAUDE.md`、`AGENTS.md` 均为 **由 `.lingshu/scripts/sync-rules.mjs` 自动生成的产物**，禁止手动编辑。
-- **变更流程**: 规则修改必须改动 `reference/rules/` 真源，再执行 `npm run sync` 重新分发。
+- **产物只读**: `.cursor/rules/`、`.trae/rules/`、`.qoder/rules/`、`.agent/rules/`、`CLAUDE.md`、`AGENTS.md` 均为 **由 `lingshu sync` 自动生成的产物**，禁止手动编辑。
+- **变更流程**: 规则修改必须改动 `reference/rules/` 真源，再执行 `lingshu sync` 重新分发。
 - **CI 保障**: GitHub Actions 会校验入库产物与真源的一致性，防止漂移。
 
 ## 4. 环境与依赖标准 (Stack Standard)

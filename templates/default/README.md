@@ -23,7 +23,7 @@
 | 🧠 **中枢-肢体解耦** | 文档/规则集中于中枢仓，业务代码分散于嵌套肢体仓 |
 | 📜 **规则 SSoT** | 所有 AI 行为规则统一写在 `reference/rules/`，避免多副本漂移 |
 | 🤖 **多 AI 工具适配** | 一处定义，自动分发至 6 大主流 AI 编码工具 |
-| 🌍 **跨平台脚本** | 纯 Node.js 实现，Win/macOS/Linux 通用 |
+| 🪶 **零侵入** | 同步引擎在全局 CLI 内，仓库只留治理资产，无 `.lingshu/`、无 `package.json` |
 | 🛡️ **CI 守护** | GitHub Actions 自动校验真源与产物的一致性 |
 | ⚙️ **拉取自动重分发** | `git pull` 后 post-merge hook 自动重新分发规则 |
 
@@ -40,8 +40,8 @@
 | Qoder | `.qoder/rules/*.md` | ❌ | 个人偏好 |
 | Antigravity | `.agent/rules/*.md` | ❌ | 个人偏好 |
 
-> **基线工具** 产物入库，保证团队成员克隆即用；**个人偏好工具** 由各开发者本地按需生成。
-> 新增工具支持：仅需在 `.lingshu/config/adapters.mjs` 添加一项配置。
+> **是否入库由 `.gitignore` 决定**，可用 `lingshu tool track/untrack <工具>` 调整。
+> 内置工具不满足需求时，可在 `reference/.lingshu.json` 声明自定义适配器（可选逃生舱）。
 
 ---
 
@@ -49,19 +49,9 @@
 
 ```text
 .
-├── .lingshu/                    # 项目元数据空间（不属于任何 AI 工具）
-│   ├── config/
-│   │   └── adapters.mjs         # AI 工具适配清单
-│   ├── scripts/
-│   │   ├── sync-rules.mjs       # 规则分发（核心）
-│   │   ├── doctor.mjs           # 架构健康检查
-│   │   └── install-hooks.mjs    # Git hooks 安装器
-│   └── hooks/
-│       └── post-merge           # 拉取后自动同步规则
-│
-├── reference/                   # 真源 (Reference)
+├── reference/                   # 真源 (Reference) — 中枢的全部资产
 │   ├── rules/                   # AI 规则 SSoT
-│   │   ├── lingshu-core.md      # 架构核心宪法
+│   │   ├── lingshu-core.md      # 架构核心准则
 │   │   └── ai-behavior.md       # 智能体行为准则
 │   ├── docs/                    # 静态真理：PRD、契约、架构
 │   ├── experience/              # 经验复利：高分 Prompt、避坑笔记
@@ -71,17 +61,18 @@
 │       ├── walkthroughs/        # 存证：逻辑决策、代码演练
 │       └── reports/             # 审计：汇总报告、数据库变更
 │
-├── CLAUDE.md                    # Claude Code 入口（基线，自动生成）
-├── AGENTS.md                    # Codex / 通用 Agents 入口（基线，自动生成）
+├── CLAUDE.md                    # Claude Code 入口（基线，由 lingshu sync 生成）
+├── AGENTS.md                    # Codex / 通用 Agents 入口（基线，由 lingshu sync 生成）
 │
-├── .cursor/  .trae/  .qoder/   # AI 工具规则目录（自动生成 / gitignore）
-├── .agent/                      # Antigravity：rules 自动生成，workflows 入库
+├── .cursor/  .trae/  .qoder/    # AI 工具规则目录（按需生成 / gitignore）
+├── .agent/                      # Antigravity 规则目录
 │
-├── package.json                 # npm 脚本入口
 ├── .github/workflows/           # GitHub Actions：CI 一致性守护
 ├── .gitignore                   # 灵枢版忽略规则（物理隔绝肢体仓 + 个人产物）
 └── README.md
 ```
+
+> 同步引擎不在仓库内，而在全局 CLI [@ruobai/lingshu](https://www.npmjs.com/package/@ruobai/lingshu)。仓库保持纯净的开发资产。
 
 ---
 
@@ -89,10 +80,10 @@
 
 ### 推荐方式：使用 @ruobai/lingshu CLI（一条命令）
 
-[@ruobai/lingshu](https://www.npmjs.com/package/@ruobai/lingshu) 是灵枢架构的官方脚手架（若白知行出品），把下方 7 步手动流程压缩为 1 条命令：
+[@ruobai/lingshu](https://www.npmjs.com/package/@ruobai/lingshu) 是灵枢架构的官方脚手架（若白知行出品），把下方手动流程压缩为 1 条命令：
 
 ```bash
-# 一次性安装
+# 一次性安装（团队每位成员各装一次）
 npm install -g @ruobai/lingshu
 
 # 一键创建项目（请将 your-org 替换为你的 GitHub 组织或用户名）
@@ -123,10 +114,10 @@ git push -u origin master
 git clone git@github.com:your-org/my-lingshu-app-server.git my-lingshu-app-server
 git clone git@github.com:your-org/my-lingshu-app-ui.git my-lingshu-app-ui
 
-# 4. 初始化灵枢工具链
-npm install                                # 安装依赖（含自动安装 git hooks）
-npm run sync                               # 分发规则到本地 AI 工具目录
-npm run doctor                             # 架构健康检查
+# 4. 生成基线产物 + 安装 hooks（需先全局安装 @ruobai/lingshu）
+lingshu sync --baseline                    # 分发规则到 CLAUDE.md / AGENTS.md
+lingshu hooks install                      # 安装 git hooks
+lingshu doctor                             # 架构健康检查
 ```
 
 ### 项目结构概览（接入后）
@@ -135,7 +126,6 @@ npm run doctor                             # 架构健康检查
 my-lingshu-app/                 # [中枢仓] 逻辑定义与 AI 指令中心
 ├── my-lingshu-app-server/      # [肢体仓 A] 后端代码（嵌套子仓）
 ├── my-lingshu-app-ui/          # [肢体仓 B] 前端代码（嵌套子仓）
-├── .lingshu/                   # 项目元数据
 ├── reference/                  # 真理之源
 ├── CLAUDE.md / AGENTS.md       # 基线 AI 指令
 └── README.md                   # 项目指挥总纲
@@ -153,7 +143,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 #   "请将仓库内所有文件中的 'lingshu-template' 替换为 'my-lingshu-app'"
 ```
 
-替换后执行 `npm run sync` 重新生成基线产物。
+替换后执行 `lingshu sync` 重新生成基线产物。
 
 ---
 
@@ -164,7 +154,7 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 ```
        reference/rules/*.md      ← 编辑这里（唯一真源）
               ↓
-        npm run sync              ← 一键分发
+         lingshu sync             ← 一键分发
               ↓
    ┌──────────┬──────────────┐
    ↓          ↓              ↓
@@ -176,18 +166,20 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 | 命令 | 用途 |
 |------|------|
-| `npm run sync` | 分发规则到所有 AI 工具 |
-| `npm run sync:baseline` | 仅同步基线工具（CLAUDE.md / AGENTS.md） |
-| `npm run sync:check` | 校验一致性（CI 用，不写文件） |
-| `npm run sync -- --only=cursor,codex` | 仅同步指定工具 |
-| `npm run doctor` | 架构健康检查 |
-| `npm run hooks:install` | 安装/重装 git hooks |
+| `lingshu sync` | 分发规则（baseline + 已激活的个人工具） |
+| `lingshu sync --baseline` | 仅同步基线工具（CLAUDE.md / AGENTS.md） |
+| `lingshu sync --all` | 同步所有工具 |
+| `lingshu sync --only=cursor,codex` | 仅同步指定工具 |
+| `lingshu sync --check` | 校验一致性（CI 用，不写文件） |
+| `lingshu tool list` | 查看工具矩阵与入库状态 |
+| `lingshu tool track/untrack <工具>` | 调整某工具产物是否入库 |
+| `lingshu doctor` | 架构健康检查 |
+| `lingshu hooks install` | 安装/重装 git hooks |
 
 ### 自动化机制
 
-- ⚡ **`git pull` 后** → `post-merge` hook 检测 SSoT 变更，自动 `sync`
+- ⚡ **`git pull` 后** → `post-merge` hook 检测 `reference/rules/` 变更，自动 `lingshu sync`
 - 🛡️ **PR 提交时** → GitHub Actions 校验 baseline 产物一致性，漂移即拒绝合并
-- 🔄 **`npm install` 后** → `postinstall` 钩子自动安装 git hooks
 
 ---
 
@@ -208,20 +200,8 @@ grep -rl "lingshu-template" --exclude-dir=node_modules . | xargs sed -i 's/lings
 
 ---
 
-## 演进路线 (Roadmap)
-
-| 阶段 | 状态 | 目标 |
-|:---:|:---:|------|
-| **P0** | ✅ 完成 | 中枢-肢体架构 + 多 AI 工具规则副本 |
-| **P1** | ✅ 完成 | 规则 SSoT + 跨平台分发 + CI 守护 |
-| **P2** | ✅ 完成 | [@ruobai/lingshu](https://www.npmjs.com/package/@ruobai/lingshu) 一键脚手架（init / sync / doctor / tool / limb） |
-| **P3** | 📋 待启动 | 文档温度分层 + 自动归档（`lingshu archive`） |
-| **P4** | 📋 待启动 | 模板版本管理（`lingshu upgrade`） |
-
----
-
 ## License
 
 [MIT](./LICENSE) © 2026 imrui
 
-> 注：本仓库为架构模板。基于本模板派生的新项目可自行选择协议（默认 `templates/default/package.json` 中 `license` 字段为 `UNLICENSED` 占位，由作者自决）。
+> 注：本仓库为架构模板。基于本模板派生的新项目可自行选择协议。
