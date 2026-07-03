@@ -134,13 +134,13 @@ test('init --tools 只生成指定工具产物', () => {
   assert.ok(!existsSync(join(proj, '.trae/rules/lingshu-core.md')), '未指定的 trae 不应生成');
 });
 
-test('生成的 cursor 产物含规则文件自身的 frontmatter', () => {
+test('cursor 产物：order 是保留字段，不输出到 .mdc', () => {
   freshTmp();
   runCli(['init', 'fm-test', '--all-tools', '--no-git', '--no-install-hooks']);
   const proj = join(TMP, 'fm-test');
   const mdc = readFileSync(join(proj, '.cursor/rules/lingshu-core.mdc'), 'utf8');
-  assert.match(mdc, /^---\n/, 'cursor .mdc 应以 frontmatter 开头');
-  assert.match(mdc, /description: 灵枢架构核心准则/, '应含规则文件的 description');
+  // v0.3.1 起 frontmatter 精简为仅 order；order 被过滤 → 产物不带 frontmatter
+  assert.ok(!mdc.startsWith('---'), '当规则真源仅含保留字段时，cursor .mdc 不应带 frontmatter');
   assert.ok(!mdc.includes('order:'), '保留字段 order 不应输出到产物');
 });
 
@@ -348,10 +348,10 @@ test('upgrade：v0.2.x → v0.3 机械迁移', () => {
   assert.ok(!existsSync(join(proj, '.lingshu')), '.lingshu/ 应被删除');
   assert.ok(!existsSync(join(proj, 'package.json')), '纯脚手架 package.json 应被删除');
 
-  // 规则文件应被注入 frontmatter（含原 cursor 的 description）
+  // 规则文件应被注入精简 frontmatter（v0.3.1 起仅注入 order；旧 cursor 元信息不迁）
   const core = readFileSync(join(proj, 'reference/rules/lingshu-core.md'), 'utf8');
-  assert.match(core, /^---\r?\norder: 1/, '应注入 order: 1');
-  assert.match(core, /description: 核心准则/, '应迁移原 cursor frontmatter 的 description');
+  assert.match(core, /^---\r?\norder: 1\r?\n---/, '应注入仅含 order 的 frontmatter');
+  assert.ok(!core.includes('description:'), '旧 cursor description 不应再被迁入');
 
   // 基线产物应被重生成
   assert.ok(existsSync(join(proj, 'CLAUDE.md')), '应重生成 CLAUDE.md');
@@ -401,6 +401,126 @@ test('upgrade --dry-run：只预览不写盘', () => {
   assert.ok(existsSync(join(proj, 'package.json')), 'dry-run 不应删除 package.json');
   const core = readFileSync(join(proj, 'reference/rules/lingshu-core.md'), 'utf8');
   assert.ok(!/^---/.test(core), 'dry-run 不应注入 frontmatter');
+});
+
+// ===== upgrade slim（v0.3.0 → v0.3.1，工作流瘦身）=====
+
+/** 构造 v0.3.0 结构：零侵入 + 遗留的 reference/management/ 四件套 */
+function buildV030LegacyProject(dir) {
+  mkdirSync(join(dir, 'reference/rules'), { recursive: true });
+  mkdirSync(join(dir, 'reference/management/plans'), { recursive: true });
+  mkdirSync(join(dir, 'reference/management/tasks'), { recursive: true });
+  mkdirSync(join(dir, 'reference/management/walkthroughs'), { recursive: true });
+  mkdirSync(join(dir, 'reference/management/reports'), { recursive: true });
+
+  writeFileSync(join(dir, 'reference/rules/lingshu-core.md'),
+    '---\norder: 1\nname: lingshu-core\ndescription: core\nglobs: **/*\ntrigger: always_on\n---\n# 核心\n',
+    'utf8');
+  writeFileSync(join(dir, 'reference/rules/ai-behavior.md'),
+    '---\norder: 2\nname: ai-behavior\ndescription: behavior\nglobs: **/*\ntrigger: always_on\n---\n# 行为\n',
+    'utf8');
+
+  // 四子目录各留一份 README.md（视作"空"）
+  writeFileSync(join(dir, 'reference/management/plans/README.md'), '# plans\n', 'utf8');
+  writeFileSync(join(dir, 'reference/management/tasks/README.md'), '# tasks\n', 'utf8');
+  writeFileSync(join(dir, 'reference/management/walkthroughs/README.md'), '# walkthroughs\n', 'utf8');
+  writeFileSync(join(dir, 'reference/management/reports/README.md'), '# reports\n', 'utf8');
+}
+
+test('upgrade slim：v0.3.0 → v0.3.1（删空 management/、建 decisions/）', () => {
+  freshTmp();
+  const proj = join(TMP, 'v030-legacy');
+  buildV030LegacyProject(proj);
+
+  const r = runCli(['upgrade'], { cwd: proj });
+  if (r.status !== 0) { console.error('STDOUT:', r.stdout); console.error('STDERR:', r.stderr); }
+  assert.equal(r.status, 0, 'upgrade 应成功');
+  assert.match(r.stdout, /v0\.3\.0/, '应识别为 v0.3.0');
+  assert.match(r.stdout, /v0\.3\.1/, '应说明迁移到 v0.3.1');
+
+  assert.ok(!existsSync(join(proj, 'reference/management')),
+    '空 management/ 应被整体删除');
+  assert.ok(existsSync(join(proj, 'reference/decisions/README.md')),
+    'decisions/README.md 应被创建');
+
+  const readme = readFileSync(join(proj, 'reference/decisions/README.md'), 'utf8');
+  assert.match(readme, /Architectural Decision Records/, 'README 内容应正确');
+});
+
+test('upgrade slim：management/ 子目录含用户内容时保留 + 警告', () => {
+  freshTmp();
+  const proj = join(TMP, 'v030-with-content');
+  buildV030LegacyProject(proj);
+  writeFileSync(
+    join(proj, 'reference/management/plans/20250101_task.plan.md'),
+    '# 用户方案\n', 'utf8',
+  );
+
+  const r = runCli(['upgrade'], { cwd: proj });
+  assert.equal(r.status, 0);
+
+  // 含用户文件的子目录应保留
+  assert.ok(
+    existsSync(join(proj, 'reference/management/plans/20250101_task.plan.md')),
+    'plans/ 下用户文件应保留',
+  );
+  // 空子目录应被删
+  assert.ok(!existsSync(join(proj, 'reference/management/tasks')),
+    '空 tasks/ 应被删除');
+  assert.ok(!existsSync(join(proj, 'reference/management/reports')),
+    '空 reports/ 应被删除');
+  // decisions/ 应被建
+  assert.ok(existsSync(join(proj, 'reference/decisions/README.md')),
+    'decisions/README.md 应被创建');
+  // warning 输出
+  assert.match(r.stdout, /建议评估.*迁移至 reference\/decisions/,
+    '含内容子目录应输出迁移建议');
+});
+
+test('upgrade slim：--dry-run 不写盘', () => {
+  freshTmp();
+  const proj = join(TMP, 'v030-dry');
+  buildV030LegacyProject(proj);
+
+  const r = runCli(['upgrade', '--dry-run'], { cwd: proj });
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /dry-run/);
+  assert.ok(existsSync(join(proj, 'reference/management')),
+    'dry-run 不应删 management/');
+  assert.ok(!existsSync(join(proj, 'reference/decisions')),
+    'dry-run 不应建 decisions/');
+});
+
+test('upgrade slim：规则真源含旧措辞时输出手动更新提示', () => {
+  freshTmp();
+  const proj = join(TMP, 'v030-stale-rules');
+  buildV030LegacyProject(proj);
+  // 让 ai-behavior.md 含旧措辞
+  writeFileSync(join(proj, 'reference/rules/ai-behavior.md'),
+    '---\norder: 2\nname: ai-behavior\ndescription: legacy\nglobs: **/*\ntrigger: always_on\n---\n# 行为\n\n## 2. 自动化归档守卫\n',
+    'utf8');
+
+  const r = runCli(['upgrade'], { cwd: proj });
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /规则真源仍含旧措辞/,
+    '应提示规则真源含旧措辞');
+  assert.match(r.stdout, /reference\/rules\/ai-behavior\.md/,
+    '应列出含旧措辞的文件路径');
+});
+
+test('upgrade：init 出的新项目立即幂等（已是 v0.3.1）', () => {
+  freshTmp();
+  runCli(['init', 'fresh-v031', '--no-git', '--no-install-hooks']);
+  const proj = join(TMP, 'fresh-v031');
+  // 模板已带 decisions/README.md、无 management/
+  assert.ok(existsSync(join(proj, 'reference/decisions/README.md')),
+    'init 应带 decisions/README.md');
+  assert.ok(!existsSync(join(proj, 'reference/management')),
+    'init 不应带 management/');
+
+  const r = runCli(['upgrade'], { cwd: proj });
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /v0\.3\.1.*无需迁移|无需迁移/, 'init 之后 upgrade 应立即幂等');
 });
 
 test.after(() => {

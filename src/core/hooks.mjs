@@ -10,13 +10,13 @@ import { join } from 'node:path';
 
 /** post-merge：git pull/merge 后若规则真源变更，自动用全局 CLI 重新分发 */
 const POST_MERGE = `#!/bin/sh
-# 灵枢 post-merge hook（由 lingshu 安装）
+# post-merge hook（由 lingshu 安装）
 # git pull / merge 后，若 reference/rules/ 变更，自动重新分发规则到本地工具。
 
 CHANGED=$(git diff HEAD@{1} HEAD --name-only 2>/dev/null)
 
 if echo "$CHANGED" | grep -qE "^reference/rules/"; then
-  echo "检测到灵枢规则变更，正在重新分发..."
+  echo "检测到规则变更，正在重新分发..."
   lingshu sync
 fi
 `;

@@ -1,15 +1,25 @@
-# 📜 灵枢之源 (Source of Truth)
+# 真源文档 (Source of Truth)
 
-> **"所有流向海洋的河，都必须记得源头的方向。"**
+本目录是项目的**真源文档层**——PRD、API 契约、状态机、数据库 Schema 等
+"技术契约"应在此定义。代码是文档的投影 (Projection)。
 
-本目录 `contracts/` 是项目的 **唯一真理 (Single Source of Truth)**。
+## 目录扩张建议（可选）
 
-请在开始阅读具体的契约前，先阅读 [灵枢宣言](../README.md) 以理解我们的核心哲学。
+当仓库需要同时承担"设计文档"与"编码过程"两职时，可参考以下子目录约定
+（**按需自建**，模板不预置骨架）：
 
-## 📖 文档索引
+- **`prd/`** — 产品需求文档（PRD / RFC）
+- **`tad/`** — 技术架构文档（TAD / 系统设计）
+- **`api/`** — API 契约（OpenAPI / GraphQL Schema）
+- **`schema/`** — 数据库 Schema / 迁移
+- **`assets/`** — 附属图片、图表源文件
 
-- [项目全局架构](./architecture.md)
-- [API 契约与数据模型](./api-contract.md)
-- [业务状态机逻辑](./state-machines.md)
-- [业务逻辑说明 (PRD)](./prd-template.md)
+### 约定
 
+- **命名**：`<slug>.md`（例：`prd/user-login.md`）。Git 已记录时间线，
+  文件名无需日期前缀。
+- **架构决策 (ADR)**：统一放**顶层** `reference/decisions/`，不要在此
+  嵌套 `docs/prd/decisions/` 之类的子目录。
+- **不使用数字前缀**（`01-`/`02-`）——排序交给分类与命名意图，避免手动维护顺序。
+
+> 上述结构仅为建议。不需要设计文档承载能力的仓库可让本目录保持扁平。
