@@ -11,6 +11,7 @@
  *   tool <subcmd>     管理 AI 工具支持（list/track/untrack）
  *   limb <subcmd>     管理肢体仓（list/add）
  *   hooks <subcmd>    安装 git hooks（install）
+ *   ci <subcmd>       安装可选 CI 一致性守护（install）
  *   upgrade           迁移存量项目到 v0.3 零侵入结构
  *   --version, -v     显示版本
  *   --help, -h        显示帮助
@@ -58,6 +59,9 @@ ${pkg.description}  v${pkg.version}
   hooks <subcmd>       安装灵枢 git hooks
                        子命令: install
 
+  ci <subcmd>          管理可选 CI 一致性守护（GitHub Actions workflow）
+                       子命令: install [--force]
+
   upgrade              将存量项目迁移到 v0.3 零侵入结构
                        选项: --dry-run（仅预览）, --force
 
@@ -74,6 +78,7 @@ const COMMANDS = {
   tool: () => import('../src/commands/tool.mjs'),
   limb: () => import('../src/commands/limb.mjs'),
   hooks: () => import('../src/commands/hooks.mjs'),
+  ci: () => import('../src/commands/ci.mjs'),
   upgrade: () => import('../src/commands/upgrade.mjs'),
 };
 

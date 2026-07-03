@@ -41,9 +41,11 @@
 ├── .cursor/  .trae/  .qoder/    # AI 工具规则目录（按需生成 / gitignore）
 ├── .agent/                      # Antigravity 规则目录
 │
-├── .github/workflows/           # CI 一致性守护
 ├── .gitignore                   # 忽略规则（物理隔绝肢体仓 + 个人产物）
 └── README.md
+
+# 可选设施（默认不装，需运行 `lingshu ci install` 加装）
+# └── .github/workflows/         # GitHub Actions CI 一致性守护
 ```
 
 ---
@@ -80,7 +82,7 @@
 ### 自动化机制
 
 - **`git pull` 后** → `post-merge` hook 检测 `reference/rules/` 变更，自动 `lingshu sync`
-- **PR 提交时** → GitHub Actions 校验 baseline 产物一致性，漂移即拒绝合并
+- **PR 提交时** → GitHub Actions 校验 baseline 产物一致性（可选，`lingshu ci install` 加装）
 
 ---
 

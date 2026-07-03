@@ -58,9 +58,10 @@ export default async function init({ args, pkgRoot }) {
   log.hint(`模板路径: ${templatePath}`);
 
   // Step 1: 拷贝模板
+  //   .github/ 从 v0.3.2 起改为可选设施，init 默认不装；用户按需 `lingshu ci install`
   log.step('拷贝模板');
   if (!here) mkdirSync(targetDir, { recursive: true });
-  copyTemplate(templatePath, targetDir);
+  copyTemplate(templatePath, targetDir, { exclude: ['.github'] });
 
   // _gitignore → .gitignore：npm publish 会把 .gitignore 当 .npmignore 吞掉，
   // 模板内只能用 _gitignore 入包，init 时复原为真正的 .gitignore。
@@ -151,6 +152,7 @@ export default async function init({ args, pkgRoot }) {
   if (!here) console.log(`  cd ${finalName}`);
   console.log('  lingshu doctor              # 健康检查');
   console.log('  lingshu sync                # 重新分发规则到本地 AI 工具');
+  console.log('  lingshu ci install          # 加装 GitHub CI 一致性守护（可选）');
   console.log('  git push -u origin master   # 推送到远程（如已设置 remote）');
   log.blank();
 }

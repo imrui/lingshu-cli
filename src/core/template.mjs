@@ -10,10 +10,18 @@ import { join, resolve, extname, sep } from 'node:path';
  *
  * 过滤规则只看 src 相对 srcDir 的部分——这样无论 CLI 自身被全局安装到
  * 哪个 node_modules 路径下，都不会误把整个模板树都过滤掉。
+ *
+ * @param {string} srcDir
+ * @param {string} dstDir
+ * @param {object} [options]
+ * @param {string[]} [options.exclude] 额外排除的相对路径（对目录或文件均生效），
+ *   如 ['.github'] 会排除整个 .github/，['.github/workflows/rules-consistency.yml']
+ *   仅排除单个文件。
  */
-export function copyTemplate(srcDir, dstDir) {
+export function copyTemplate(srcDir, dstDir, options = {}) {
   if (!existsSync(srcDir)) throw new Error(`模板目录不存在: ${srcDir}`);
   const srcRoot = resolve(srcDir);
+  const extraExcludes = (options.exclude ?? []).map((p) => p.replace(/\\/g, '/').replace(/\/$/, ''));
   cpSync(srcDir, dstDir, {
     recursive: true,
     filter: (src) => {
@@ -27,6 +35,10 @@ export function copyTemplate(srcDir, dstDir) {
       if (lower.includes('/.git/') || lower.endsWith('/.git')) return false;
       if (lower.includes('/node_modules/') || lower.endsWith('/node_modules')) return false;
       if (lower.endsWith('/.claude/settings.local.json')) return false;
+      // 调用方额外指定的排除
+      for (const ex of extraExcludes) {
+        if (rel === ex || rel.startsWith(ex + '/')) return false;
+      }
       return true;
     },
   });

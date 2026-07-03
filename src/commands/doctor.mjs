@@ -18,7 +18,7 @@ export default async function doctor() {
   const fail  = m => { console.log(c.red  (`  ✗ ${m}`)); errors++; };
 
   // 1. 物理完整性（必需目录）
-  console.log(c.cyan('[1/3] 物理完整性'));
+  console.log(c.cyan('[1/4] 物理完整性'));
   const requiredDirs = [
     'reference/rules',
     'reference/docs',
@@ -31,7 +31,7 @@ export default async function doctor() {
   if (existsSync(join(root, 'reference/decisions'))) ok('reference/decisions（可选）');
 
   // 2. SSoT 真源
-  console.log(c.cyan('\n[2/3] SSoT 真源'));
+  console.log(c.cyan('\n[2/4] SSoT 真源'));
   const ssotFiles = [
     'reference/rules/ai-behavior.md',
     'reference/rules/lingshu-core.md',
@@ -42,7 +42,7 @@ export default async function doctor() {
   }
 
   // 3. 基线产物
-  console.log(c.cyan('\n[3/3] 基线产物'));
+  console.log(c.cyan('\n[3/4] 基线产物'));
   const baselineFiles = [
     'CLAUDE.md',
     'AGENTS.md',
@@ -50,6 +50,14 @@ export default async function doctor() {
   for (const f of baselineFiles) {
     if (existsSync(join(root, f))) ok(f);
     else warn(`${f} 缺失（可运行 lingshu sync --baseline 生成）`);
+  }
+
+  // 4. 可选设施
+  console.log(c.cyan('\n[4/4] 可选设施'));
+  if (existsSync(join(root, '.github/workflows/rules-consistency.yml'))) {
+    ok('GitHub CI 一致性守护已安装');
+  } else {
+    console.log(c.dim('  · GitHub CI 一致性守护 未安装（可运行 `lingshu ci install` 加装）'));
   }
 
   log.blank();

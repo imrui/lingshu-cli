@@ -5,6 +5,57 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.3.2] - 2026-07-03
+
+> **主题：可选 CI**——`.github/workflows/` 从默认拷贝改为按需加装。
+
+### 背景
+
+用户反馈：**不是所有派生仓都用 GitHub Actions**（GitLab CI / Jenkins /
+self-hosted / 或干脆不用 CI）。之前 `init` 默认拷贝
+`.github/workflows/rules-consistency.yml` 到派生仓，对上述场景形成隐性侵入
+——即便文件已技术中立，"未经我同意就配好 CI"本身就是一种侵入。
+
+延续 v0.3.1 减法哲学，将 CI 一致性守护从"默认设施"降级为"可选加装"。
+
+### Added
+
+- **`lingshu ci install`**：新增命令，从内置模板拷贝
+  `.github/workflows/rules-consistency.yml` 到当前项目。
+  - 幂等：文件已存在时输出"已存在，跳过"，不覆盖用户已有内容。
+  - `--force`：强制覆盖已存在的 workflow（用于修复被误改的情况）。
+  - 与 `lingshu hooks install` 形成对称的可选设施命令族。
+
+### Changed
+
+- **`lingshu init` 默认不再拷贝 `.github/`**：派生仓开箱不含 CI workflow。
+  - "下一步"提示中加入 `lingshu ci install # 加装 GitHub CI 一致性守护（可选）`。
+  - `copyTemplate` 增加 `exclude` 参数（如 `['.github']`），支持调用方精细控制排除项。
+- **`lingshu doctor` 扩为 4 步**：新增 `[4/4] 可选设施` 检查——存在
+  `.github/workflows/rules-consistency.yml` 时打勾，不存在时以 dim 灰字提示
+  `可运行 lingshu ci install 加装`（**不是错误，也不是 warning**）。
+- **模板 `README.md` 目录树**：`.github/workflows/` 一行移除（init 不装则不出现）；
+  相关"CI 守护"表述加"可选"注脚。
+
+### Migration
+
+**存量派生仓完全不受影响**——他们的 `.github/workflows/rules-consistency.yml`
+若已存在，`lingshu upgrade` 不主动删除，继续正常校验 SSoT 与产物一致性。
+
+**新 init 项目**默认无 CI；如需守护：
+```bash
+lingshu ci install
+```
+
+### Tests
+
+- smoke 22 → 25（+3）：
+  - `ci install：init 之后手动加装 workflow`
+  - `ci install：幂等（跳过）+ --force 覆盖`
+  - `ci install：非灵枢项目应报错`
+  - 修改 `init 创建零侵入项目结构` 断言：`.github/workflows/*.yml` 从"应存在"
+    移到"禁止存在"（零侵入契约）。
+
 ## [0.3.1] - 2026-07-03
 
 > **主题：工作流瘦身（Slim Workflow）** —— 连自己写的规矩也开始做减法。
@@ -261,6 +312,7 @@ lingshu upgrade             # 执行
 - 核心命令 `init` / `sync` / `doctor` / `tool` / `limb`。
 - 包名 `@ruobai/lingshu`（若白知行 npm scope）。
 
+[0.3.2]: https://github.com/imrui/lingshu-cli/compare/v0.3.1...v0.3.2
 [0.3.1]: https://github.com/imrui/lingshu-cli/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/imrui/lingshu-cli/compare/v0.2.6...v0.3.0
 [0.2.6]: https://github.com/imrui/lingshu-cli/compare/v0.2.5...v0.2.6
