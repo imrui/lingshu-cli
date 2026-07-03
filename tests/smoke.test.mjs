@@ -62,13 +62,13 @@ test('init 创建零侵入项目结构（无 .lingshu / 无 package.json）', ()
     'CLAUDE.md',
     'AGENTS.md',
     '.gitignore',
-    '.github/workflows/rules-consistency.yml',
   ]) {
     assert.ok(existsSync(join(proj, p)), `缺失: ${p}`);
   }
 
   // 零侵入核心断言：派生仓不应再包含引擎与 package.json
-  for (const forbidden of ['.lingshu', 'package.json', '_gitignore']) {
+  // v0.3.2 起 .github/ 也改为可选设施（`lingshu ci install` 加装）
+  for (const forbidden of ['.lingshu', 'package.json', '_gitignore', '.github']) {
     assert.ok(
       !existsSync(join(proj, forbidden)),
       `零侵入契约：派生仓不应包含 ${forbidden}`,
@@ -521,6 +521,59 @@ test('upgrade：init 出的新项目立即幂等（已是 v0.3.1）', () => {
   const r = runCli(['upgrade'], { cwd: proj });
   assert.equal(r.status, 0);
   assert.match(r.stdout, /v0\.3\.1.*无需迁移|无需迁移/, 'init 之后 upgrade 应立即幂等');
+});
+
+// ===== ci install（v0.3.2 可选 CI 一致性守护）=====
+
+test('ci install：init 之后手动加装 workflow', () => {
+  freshTmp();
+  runCli(['init', 'ci-test', '--no-git', '--no-install-hooks']);
+  const proj = join(TMP, 'ci-test');
+  const workflow = join(proj, '.github/workflows/rules-consistency.yml');
+
+  assert.ok(!existsSync(workflow), 'init 后 workflow 不应存在（v0.3.2 零侵入）');
+
+  const r = runCli(['ci', 'install'], { cwd: proj });
+  assert.equal(r.status, 0, 'ci install 应成功');
+  assert.match(r.stdout, /已安装.*一致性守护/);
+  assert.ok(existsSync(workflow), '安装后 workflow 应存在');
+
+  const content = readFileSync(workflow, 'utf8');
+  assert.match(content, /npx -y @ruobai\/lingshu sync --check --baseline/,
+    'workflow 应包含 npx 调用');
+});
+
+test('ci install：幂等（文件已存在时跳过），--force 覆盖', () => {
+  freshTmp();
+  runCli(['init', 'ci-idem', '--no-git', '--no-install-hooks']);
+  const proj = join(TMP, 'ci-idem');
+  const workflow = join(proj, '.github/workflows/rules-consistency.yml');
+
+  runCli(['ci', 'install'], { cwd: proj });
+  assert.ok(existsSync(workflow));
+
+  // 篡改文件内容，验证第二次 install 不会覆盖（幂等）
+  writeFileSync(workflow, '# tampered\n', 'utf8');
+  let r = runCli(['ci', 'install'], { cwd: proj });
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /已存在.*跳过/);
+  assert.equal(readFileSync(workflow, 'utf8'), '# tampered\n',
+    '幂等：不应覆盖已存在的文件');
+
+  // --force 覆盖
+  r = runCli(['ci', 'install', '--force'], { cwd: proj });
+  assert.equal(r.status, 0);
+  assert.match(readFileSync(workflow, 'utf8'), /npx -y @ruobai\/lingshu/,
+    '--force 应覆盖为模板内容');
+});
+
+test('ci install：非灵枢项目应报错', () => {
+  freshTmp();
+  const notLingshu = join(TMP, 'not-lingshu');
+  mkdirSync(notLingshu, { recursive: true });
+  const r = runCli(['ci', 'install'], { cwd: notLingshu });
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr + r.stdout, /不是灵枢项目/);
 });
 
 test.after(() => {

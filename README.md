@@ -36,7 +36,7 @@ npm install -g @ruobai/lingshu
 npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
 
 # 锁定版本
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.3.1
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.3.2
 ```
 
 > 团队协作提示：v0.3 起派生仓不含 `package.json`，同步统一走全局 `lingshu sync`。**团队每位成员各全局安装一次**即可；CI 用 `npx -y @ruobai/lingshu` 临时调用。
@@ -118,6 +118,15 @@ lingshu init my-lingshu-app \
 | 子命令 | 说明 |
 |--------|------|
 | `install` | 在当前项目安装内置 git hooks（`post-merge`：`git pull` 后自动 `lingshu sync`）。`init` 时已自动安装，本命令供存量项目补装 |
+
+### `lingshu ci <subcmd>`
+
+**可选**的 GitHub Actions CI 一致性守护。v0.3.2 起 `init` 不再默认拷贝
+`.github/workflows/`，由本命令按需加装。
+
+| 子命令 | 说明 |
+|--------|------|
+| `install` | 拷贝 `.github/workflows/rules-consistency.yml` 到当前项目。幂等（已存在则跳过），加 `--force` 覆盖 |
 
 ### `lingshu upgrade`
 
