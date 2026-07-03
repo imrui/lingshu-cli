@@ -1,9 +1,9 @@
 # ==========================================
-# 灵枢架构 — CI 一致性守护 (GitHub Actions)
+# CI 一致性守护 (GitHub Actions)
 # ==========================================
 # 防止 reference/rules/ 真源与基线工具产物（CLAUDE.md / AGENTS.md）发生漂移。
 # 仅校验 baseline 工具，因为只有它们入库；个人偏好工具产物在 .gitignore 中。
-# v0.3 零侵入：通过 npx 调用全局 CLI，仓库内不再携带同步引擎。
+# 通过 npx 调用全局 CLI，仓库内不携带同步引擎。
 
 name: rules-consistency
 
@@ -18,7 +18,7 @@ on:
 
 jobs:
   rules-consistency:
-    name: 校验灵枢规则一致性（baseline 工具）
+    name: 校验规则一致性（baseline 工具）
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

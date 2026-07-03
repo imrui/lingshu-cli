@@ -36,7 +36,7 @@ npm install -g @ruobai/lingshu
 npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
 
 # 锁定版本
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.3.0
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.3.1
 ```
 
 > 团队协作提示：v0.3 起派生仓不含 `package.json`，同步统一走全局 `lingshu sync`。**团队每位成员各全局安装一次**即可；CI 用 `npx -y @ruobai/lingshu` 临时调用。
@@ -90,7 +90,7 @@ lingshu init my-lingshu-app \
 
 ### `lingshu doctor`
 
-架构健康检查（物理结构 + SSoT 真源 + 灵枢宣言）。
+架构健康检查：物理完整性（`reference/rules` + `reference/docs`）+ SSoT 真源（`ai-behavior.md` + `lingshu-core.md`）+ 基线产物（`CLAUDE.md` + `AGENTS.md`）。
 
 ### `lingshu tool <subcmd>`
 
@@ -129,7 +129,8 @@ lingshu init my-lingshu-app \
 | `--dry-run` | 仅预览将执行的动作，不写盘 |
 | `--force` | 即使检测到风险（如 `package.json` 含业务依赖）也继续 |
 
-- **v0.2.x → v0.3**：删除 `.lingshu/`、删除/瘦身 `package.json`、把原 `adapters.mjs` 的 cursor frontmatter 迁入 `reference/rules/*.md`、改造 CI 为 `npx`、重装 hooks、重生成基线产物。
+- **v0.2.x → v0.3**：删除 `.lingshu/`、删除/瘦身 `package.json`、把原 `adapters.mjs` 的 cursor frontmatter 迁入 `reference/rules/*.md`（v0.3.1 起仅注入 `order`）、改造 CI 为 `npx`、重装 hooks、重生成基线产物。
+- **v0.3.0 → v0.3.1（工作流瘦身）**：删除空的 `reference/management/{plans,tasks,walkthroughs,reports}/`；含用户内容的子目录保留 + 输出迁移建议；新建 `reference/decisions/README.md`（ADR）；规则真源含旧措辞（`自动化归档守卫` / `CRITICAL` / `reference/management/`）时**输出手动更新提示**，本命令不改写用户规则内容。
 - **灵枢 1.0**（规则散落在产物、无 `reference/rules/` 真源）：无法无损自动迁移，给出明确的手动迁移指引。
 
 ---
@@ -168,8 +169,7 @@ lingshu init my-lingshu-app \
 | `tool`（track/untrack） | ✅ |
 | `limb` | ✅ |
 | `hooks` | ✅ |
-| `upgrade` | ✅ |
-| `archive` | 🚧 待规划 |
+| `upgrade` | ✅（v0.2.x → v0.3、v0.3.0 → v0.3.1） |
 
 ---
 
@@ -179,7 +179,7 @@ lingshu init my-lingshu-app \
 git clone git@github.com:imrui/lingshu-cli.git
 cd lingshu-cli
 
-npm test                       # 运行 smoke 测试（17 项）
+npm test                       # 运行 smoke 测试（22 项）
 node bin/lingshu.mjs --help    # 本地试运行
 npm link                       # 全局链接，方便调试
 ```

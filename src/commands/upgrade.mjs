@@ -4,17 +4,14 @@
  *   --dry-run     仅打印将要执行的迁移动作，不写盘
  *   --force       即使检测到风险也继续（如 package.json 含业务依赖）
  *
- * 将存量灵枢项目迁移到 v0.3 零侵入结构：
- *   - 删除 .lingshu/ 引擎目录
- *   - 删除/瘦身 package.json（仅当是同步脚手架）
- *   - 把原 adapters.mjs 中 cursor 的 frontmatter 迁入 reference/rules/*.md
- *   - 重装内置 git hooks、改造 CI、重生成基线产物
+ * 迁移路径：
+ *   - v0.2.x → v0.3   零侵入结构（删 .lingshu、瘦 package.json、注入 frontmatter…）
+ *   - v0.3.0 → v0.3.1 工作流瘦身（删 reference/management/ 四件套、建 decisions/）
  *
- * 仅支持 v0.2.x → v0.3 的机械迁移；灵枢 1.0（规则散落在产物、无 reference/rules 真源）
- * 无法无损自动迁移，会给出明确指引。
+ * 灵枢 1.0（规则散落在产物、无 reference/rules 真源）无法无损自动迁移，仅给出手动指引。
  */
 
-import { existsSync, readFileSync, writeFileSync, rmSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, rmSync, readdirSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from '../utils/args.mjs';
@@ -40,6 +37,120 @@ function hasFrontmatter(content) {
   return /^---\r?\n/.test(content);
 }
 
+/** ADR 目录 README（内嵌，避免依赖模板路径；与模板保持一致，技术中立） */
+function decisionsReadme() {
+  return `# Architectural Decision Records (ADR)
+
+> 记录本仓库**架构级决策**的目录，**可选**——只在需要时创建条目。
+
+## 何时写 ADR
+
+- 架构级技术选型
+- 数据库 Schema / Migration 决策
+- 破坏性 API 变更
+- 跨仓协议变更
+- 事故复盘的关键决策链条
+
+**日常任务不写 ADR**——决策链条走 Git commit message 与 PR 描述即可。
+
+## 命名与格式
+
+- 文件名：\`ADR-NNNN-<slug>.md\`（例：\`ADR-0001-<slug>.md\`）
+- 编号连续递增，不跳号；被 Superseded 的条目保留原文件不删。
+- 建议章节：**Context** / **Decision** / **Consequences** / **Alternatives**
+- 参考：<https://adr.github.io/>
+
+## 状态字段（frontmatter 建议）
+
+\`\`\`yaml
+---
+adr: 0001
+title: <决策标题>
+status: Accepted   # Proposed | Accepted | Superseded | Deprecated
+date: YYYY-MM-DD
+supersedes: null
+superseded_by: null
+---
+\`\`\`
+
+## 与 Git / PR 的分工
+
+- **一次编辑背后的"为什么"** → PR 描述
+- **一个决策背后的"权衡"** → ADR（跨越多次编辑，可被后来的决策 Supersede）
+`;
+}
+
+/** v0.3 结构下是否需要 slim（工作流瘦身）迁移 */
+function needsSlimMigration(root) {
+  return existsSync(join(root, 'reference/management'))
+      || !existsSync(join(root, 'reference/decisions'));
+}
+
+/** 判定 management/ 子目录是否可视为"空"（无内容或仅有 README.md/占位文件） */
+function isSubdirEmpty(subPath) {
+  if (!existsSync(subPath)) return true;
+  const items = readdirSync(subPath).filter((f) => f !== 'README.md');
+  return items.length === 0;
+}
+
+/**
+ * 规划 v0.3.0 → v0.3.1 迁移动作。
+ * 返回 { actions, warnings, willDelete, createDecisions, staleRules }
+ */
+function planSlimMigration(root) {
+  const mgmtDir = join(root, 'reference/management');
+  const decisionsDir = join(root, 'reference/decisions');
+  const rulesDir = join(root, 'reference/rules');
+
+  const actions = [];
+  const warnings = [];
+  const willDelete = [];
+  let createDecisions = false;
+
+  if (existsSync(mgmtDir)) {
+    let allEmpty = true;
+    const subs = readdirSync(mgmtDir);
+    for (const sub of subs) {
+      const subPath = join(mgmtDir, sub);
+      if (isSubdirEmpty(subPath)) {
+        actions.push(`删除空目录 reference/management/${sub}/`);
+        willDelete.push(subPath);
+      } else {
+        allEmpty = false;
+        warnings.push(
+          `reference/management/${sub}/ 含用户内容，已保留；建议评估是否迁移至 reference/decisions/（ADR）`,
+        );
+      }
+    }
+    if (allEmpty) {
+      actions.push('删除空的 reference/management/');
+      willDelete.push(mgmtDir);
+    }
+  }
+
+  if (!existsSync(decisionsDir)) {
+    actions.push('新建 reference/decisions/README.md（ADR 说明）');
+    createDecisions = true;
+  }
+
+  // 规则真源含旧措辞时给出手动指引（不改动，规则真源属项目自主内容）
+  const staleRules = [];
+  if (existsSync(rulesDir)) {
+    for (const f of readdirSync(rulesDir).filter((n) => n.endsWith('.md'))) {
+      const txt = readFileSync(join(rulesDir, f), 'utf8');
+      if (
+        txt.includes('自动化归档守卫')
+        || txt.includes('强制存档 (CRITICAL)')
+        || txt.includes('reference/management/')
+      ) {
+        staleRules.push(`reference/rules/${f}`);
+      }
+    }
+  }
+
+  return { actions, warnings, willDelete, createDecisions, staleRules };
+}
+
 /** 序列化 frontmatter（与引擎一致的 YAML 子集） */
 function renderFrontmatter(meta) {
   const lines = ['---'];
@@ -62,7 +173,48 @@ export default async function upgrade({ args }) {
   }
 
   if (version === 'v0.3') {
-    log.ok('当前已是 v0.3 零侵入结构，无需迁移');
+    // v0.3.0 → v0.3.1 工作流瘦身
+    if (!needsSlimMigration(root)) {
+      log.ok('当前已是 v0.3.1 零仪式结构，无需迁移');
+      return;
+    }
+    log.hint(`检测到结构版本: ${c.bold('v0.3.0')}（含 reference/management/ 四件套）`);
+    log.hint('将迁移到 v0.3.1（工作流瘦身：management → decisions/ADR）');
+    log.blank();
+
+    const plan = planSlimMigration(root);
+    console.log(c.cyan('将执行以下迁移动作：'));
+    for (const a of plan.actions) console.log(`  • ${a}`);
+    log.blank();
+
+    if (dryRun) {
+      log.ok('dry-run：以上动作未执行');
+      if (plan.warnings.length) { log.blank(); for (const w of plan.warnings) log.warn(w); }
+      if (plan.staleRules.length) {
+        log.blank();
+        log.warn('以下规则真源仍含旧措辞（自动化归档守卫 / CRITICAL / reference/management/）：');
+        for (const f of plan.staleRules) log.hint(`  - ${f}`);
+        log.hint('  建议手动更新真源；本命令不改写用户规则内容。');
+      }
+      return;
+    }
+
+    for (const p of plan.willDelete) rmSync(p, { recursive: true, force: true });
+    if (plan.createDecisions) {
+      const decisionsDir = join(root, 'reference/decisions');
+      mkdirSync(decisionsDir, { recursive: true });
+      writeFileSync(join(decisionsDir, 'README.md'), decisionsReadme(), 'utf8');
+    }
+
+    log.blank();
+    log.ok('迁移完成（v0.3.0 → v0.3.1，工作流瘦身）');
+    if (plan.warnings.length) { log.blank(); for (const w of plan.warnings) log.warn(w); }
+    if (plan.staleRules.length) {
+      log.blank();
+      log.warn('以下规则真源仍含旧措辞（自动化归档守卫 / CRITICAL / reference/management/）：');
+      for (const f of plan.staleRules) log.hint(`  - ${f}`);
+      log.hint('  建议手动更新真源；本命令不改写用户规则内容。');
+    }
     return;
   }
 
@@ -93,7 +245,8 @@ export default async function upgrade({ args }) {
     warnings.push(`读取旧 adapters.mjs 失败（将用默认 frontmatter）: ${e.message}`);
   }
 
-  // 2. 为缺 frontmatter 的规则文件注入（order 按 sources 顺序，元数据取自旧 cursor 配置）
+  // 2. 为缺 frontmatter 的规则文件注入（仅 order，其余字段回归引擎默认；
+  //    自 v0.3.1 起 frontmatter 精简为只含 order，旧 cursor 元信息不再迁入）
   const rulesDir = join(root, 'reference/rules');
   const ruleFiles = existsSync(rulesDir)
     ? readdirSync(rulesDir).filter((f) => f.endsWith('.md'))
@@ -107,14 +260,12 @@ export default async function upgrade({ args }) {
     const idx = oldSources.findIndex((s) => s.name === name);
     const meta = {
       order: idx >= 0 ? idx + 1 : 99,
-      name,
-      description: cursorFm[name]?.description ?? `${name} 规则`,
-      globs: cursorFm[name]?.globs ?? '**/*',
-      trigger: cursorFm[name]?.trigger ?? 'always_on',
     };
     fmInjections.push({ full, file, meta, body: content });
     actions.push(`注入 frontmatter → reference/rules/${file}`);
   }
+  // cursorFm 在此路径下不再使用（旧字段 description/globs/trigger 由引擎默认承担）
+  void cursorFm;
 
   // 3. 删除 .lingshu/
   actions.push('删除 .lingshu/');
