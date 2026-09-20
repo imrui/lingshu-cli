@@ -7,19 +7,11 @@
  *   adopt <name> <local-path>         把已有本地目录复制到 <name>/ 纳入肢体管理
  */
 
-import { existsSync, readdirSync, statSync, mkdirSync, cpSync, readFileSync, appendFileSync, writeFileSync } from 'node:fs';
+import { existsSync, statSync, mkdirSync, cpSync, readFileSync, appendFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { log, c } from '../utils/log.mjs';
 import { gitClone, gitInit, isGitRepo, isGitAvailable } from '../core/git.mjs';
-
-const LIMB_PATTERNS = [
-  /-server$/, /-ui$/, /-web$/, /-app$/,
-  /-backend$/, /-frontend$/, /-mobile$/,
-];
-
-function looksLikeLimb(name) {
-  return LIMB_PATTERNS.some(re => re.test(name));
-}
+import { looksLikeLimb, listLimbs } from '../core/limbs.mjs';
 
 function warnIfNotLimbName(name) {
   if (!looksLikeLimb(name)) {
@@ -82,9 +74,7 @@ export default async function limb({ args }) {
 
 function list(root) {
   log.banner('肢体仓清单');
-  const items = readdirSync(root)
-    .filter(n => !n.startsWith('.') && statSync(join(root, n)).isDirectory())
-    .filter(n => looksLikeLimb(n));
+  const items = listLimbs(root);
 
   if (items.length === 0) {
     log.hint('当前未发现肢体仓');
@@ -92,9 +82,7 @@ function list(root) {
     return;
   }
 
-  for (const name of items) {
-    const fullPath = join(root, name);
-    const isRepo = isGitRepo(fullPath);
+  for (const { name, isRepo } of items) {
     const tag = isRepo ? c.green('[repo]') : c.yellow('[dir] ');
     console.log(`  ${tag} ${c.bold(name)}`);
   }

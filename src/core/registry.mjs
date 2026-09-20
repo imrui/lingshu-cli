@@ -6,7 +6,11 @@
  *
  * 适配器类型：
  *   - 'directory'：每个 source 在目标目录下生成独立文件（Cursor/Trae/Qoder/Antigravity）
- *   - 'file'：所有 source 合并为单一文件（Claude Code 的 CLAUDE.md、Codex 的 AGENTS.md）
+ *   - 'file'：所有 source 合并为单一文件（Codex 的 AGENTS.md）
+ *   - 'pointer'：固定内容的入口文件，不拼规则正文（Claude Code 的 CLAUDE.md → `@AGENTS.md`）
+ *
+ * v0.4 起 AI 规则正文只存在于 AGENTS.md 一份：Claude Code 支持 `@path` 导入语法，
+ * CLAUDE.md 仅保留一行引入——两份基线产物不再互为镜像。
  *
  * emitFrontmatter：directory 型适配器是否输出规则文件自身的 frontmatter
  *   （仅 Cursor 的 .mdc 需要；其余 .md 仅输出正文）。
@@ -54,10 +58,10 @@ export const ADAPTERS = {
   },
 
   'claude-code': {
-    type: 'file',
+    type: 'pointer',
     target: 'CLAUDE.md',
-    header: fileHeader('Claude Code 项目指令'),
-    separator: '\n\n---\n\n',
+    // 一行引入 · 规则正文只在 AGENTS.md（Claude Code 按 `@path` 语法导入同目录文件）
+    content: '@AGENTS.md\n',
   },
 
   codex: {

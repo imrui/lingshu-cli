@@ -2,6 +2,7 @@
  * lingshu sync [options]
  *
  * 在当前灵枢项目目录执行规则分发（零配置：读内置注册表 + reference/rules/）。
+ * v0.4 起基线产物同时分发到各肢体仓根目录；--no-limbs 关闭。
  */
 
 import { parseArgs, parseList } from '../utils/args.mjs';
@@ -9,7 +10,7 @@ import { log, c } from '../utils/log.mjs';
 import { distribute, isLingshuProject } from '../core/adapters.mjs';
 
 export default async function sync({ args }) {
-  const { opts, flags } = parseArgs(args, { booleanFlags: ['check', 'baseline', 'all'] });
+  const { opts, flags } = parseArgs(args, { booleanFlags: ['check', 'baseline', 'all', 'no-limbs'] });
 
   const projectRoot = process.cwd();
   if (!isLingshuProject(projectRoot)) {
@@ -23,14 +24,21 @@ export default async function sync({ args }) {
     baselineOnly: !!flags.baseline,
     all: !!flags.all,
     check: !!flags.check,
+    limbs: !flags['no-limbs'],
   });
 
   log.banner(flags.check ? '一致性校验' : '规则分发');
 
+  const hasLimbs = result.processed.some((p) => p.scope !== 'root');
+  let lastScope = null;
   for (const p of result.processed) {
     if (p.status === 'unknown') {
       log.warn(`未知工具: ${p.tool}`);
       continue;
+    }
+    if (hasLimbs && p.scope !== lastScope) {
+      lastScope = p.scope;
+      console.log(c.dim(p.scope === 'root' ? '── 中枢 ──' : `── 肢体仓 ${p.scope}/ ──`));
     }
     const tag = p.baseline ? c.green('[baseline]') : c.dim('[personal]');
     console.log(`${tag} ${c.bold(p.tool)}:`);
@@ -57,5 +65,6 @@ export default async function sync({ args }) {
     }
   } else {
     log.ok(`规则分发完成（共写入 ${result.written.length} 个文件）`);
+    if (hasLimbs) log.hint('肢体仓产物随各肢体仓独立提交（cd <limb>/ 后 git add AGENTS.md CLAUDE.md）');
   }
 }

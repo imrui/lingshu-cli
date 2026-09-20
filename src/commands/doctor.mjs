@@ -7,6 +7,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { log, c } from '../utils/log.mjs';
+import { listLimbs } from '../core/limbs.mjs';
 
 export default async function doctor() {
   const root = process.cwd();
@@ -50,6 +51,13 @@ export default async function doctor() {
   for (const f of baselineFiles) {
     if (existsSync(join(root, f))) ok(f);
     else warn(`${f} 缺失（可运行 lingshu sync --baseline 生成）`);
+  }
+  // v0.4 · 肢体仓根目录同样应有基线产物（由 sync 分发 · 随各肢体仓提交）
+  for (const limb of listLimbs(root)) {
+    for (const f of baselineFiles) {
+      if (existsSync(join(limb.path, f))) ok(`${limb.name}/${f}`);
+      else warn(`${limb.name}/${f} 缺失（可运行 lingshu sync 分发到肢体仓）`);
+    }
   }
 
   // 4. 可选设施

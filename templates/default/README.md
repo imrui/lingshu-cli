@@ -13,14 +13,15 @@
 
 | 工具 | 产物路径 | 是否入库 | 角色 |
 |------|---------|:---:|------|
-| **Claude Code** | `CLAUDE.md` | ✅ | **团队基线** |
-| **Codex / 通用 Agents** | `AGENTS.md` | ✅ | **团队基线** |
+| **Claude Code** | `CLAUDE.md`（仅一行 `@AGENTS.md` 引入） | ✅ | **团队基线** |
+| **Codex / 通用 Agents** | `AGENTS.md`（规则正文） | ✅ | **团队基线** |
 | Cursor | `.cursor/rules/*.mdc` | ❌ | 个人偏好 |
 | Trae | `.trae/rules/*.md` | ❌ | 个人偏好 |
 | Qoder | `.qoder/rules/*.md` | ❌ | 个人偏好 |
 | Antigravity | `.agent/rules/*.md` | ❌ | 个人偏好 |
 
 > 是否入库由 `.gitignore` 决定，可用 `lingshu tool track/untrack <工具>` 调整。
+> 基线产物同时分发到每个肢体仓根目录（`lingshu sync`），随各肢体仓独立提交。
 
 ---
 
@@ -35,8 +36,8 @@
 │   ├── docs/                    # 真源文档：PRD、契约、架构（可扩张 prd/、tad/）
 │   └── decisions/               # ADR：架构决策记录（可选，仅架构级决策才写）
 │
-├── CLAUDE.md                    # Claude Code 入口（基线产物，由 lingshu sync 生成）
-├── AGENTS.md                    # Codex / 通用 Agents 入口（基线产物）
+├── AGENTS.md                    # AI 规则正文（基线产物 · Codex / 通用 Agents 入口）
+├── CLAUDE.md                    # Claude Code 入口（仅一行 @AGENTS.md · 由 lingshu sync 生成）
 │
 ├── .cursor/  .trae/  .qoder/    # AI 工具规则目录（按需生成 / gitignore）
 ├── .agent/                      # Antigravity 规则目录
@@ -59,18 +60,19 @@
               ↓
          lingshu sync             ← 一键分发
               ↓
-   ┌──────────┬──────────────┐
-   ↓          ↓              ↓
- CLAUDE.md  AGENTS.md   .cursor/.trae/.qoder/.agent/rules/
- (入库)     (入库)      (本地，gitignore)
+   ┌──────────┬──────────────┬──────────────────────┐
+   ↓          ↓              ↓                      ↓
+ AGENTS.md  CLAUDE.md   .cursor/.trae/.qoder/   <肢体仓>/AGENTS.md
+ (入库·正文) (入库·一行引入) .agent/rules/(本地)    <肢体仓>/CLAUDE.md（随肢体仓提交）
 ```
 
 ### 命令速查
 
 | 命令 | 用途 |
 |------|------|
-| `lingshu sync` | 分发规则（baseline + 已激活的个人工具） |
-| `lingshu sync --baseline` | 仅同步基线工具（CLAUDE.md / AGENTS.md） |
+| `lingshu sync` | 分发规则（baseline + 已激活的个人工具 · 中枢与各肢体仓） |
+| `lingshu sync --baseline` | 仅同步基线工具（AGENTS.md + CLAUDE.md） |
+| `lingshu sync --no-limbs` | 只写中枢，不分发到肢体仓 |
 | `lingshu sync --all` | 同步所有工具 |
 | `lingshu sync --only=cursor,codex` | 仅同步指定工具 |
 | `lingshu sync --check` | 校验一致性（CI 用，不写文件） |

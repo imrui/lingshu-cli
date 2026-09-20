@@ -4,7 +4,7 @@ order: 1
 # 架构核心准则
 
 ## 1. 拓扑定义
-本仓库采用"中枢-肢体"分层结构：
+本仓库采用"中枢-肢体"分层结构。本规则由中枢分发到各肢体仓；在肢体仓内阅读时，下文的"根目录"均指中枢仓根目录。
 
 - **中枢仓 (The Brain)**：
   - **路径**：当前根目录 `./`
@@ -21,7 +21,7 @@ order: 1
 
 - **禁止根目录通配提交**：
   - **严禁**在根目录执行 `git add .` 或 `git commit -a`——这会导致肢体仓的代码被错误地纳入中枢仓版本控制。
-  - 根目录 Git **仅允许**追踪：`reference/` 治理资产（真源规则、docs、可选 decisions/），以及 AI 工具基线产物（`CLAUDE.md`、`AGENTS.md`）。
+  - 根目录 Git **仅允许**追踪：`reference/` 治理资产（真源规则、docs、可选 decisions/），以及 AI 工具基线产物（`AGENTS.md` 与一行引入它的 `CLAUDE.md`）。肢体仓根目录下的同名基线产物由 `lingshu sync` 分发，随各肢体仓独立提交。
 
 - **肢体仓独立提交**：
   - 修改具体业务代码后，必须显式 `cd [limb-folder_name]/` 进入子目录。
@@ -34,7 +34,8 @@ order: 1
 ## 3. 规则真源约束（SSoT）
 
 - **真源唯一**：所有 AI 行为规则的真源位于 `reference/rules/`。
-- **产物只读**：`.cursor/rules/`、`.trae/rules/`、`.qoder/rules/`、`.agent/rules/`、`CLAUDE.md`、`AGENTS.md` 均为**由 `lingshu sync` 自动生成的产物**，禁止手动编辑。
+- **产物只读**：`.cursor/rules/`、`.trae/rules/`、`.qoder/rules/`、`.agent/rules/`、`CLAUDE.md`、`AGENTS.md`（中枢与各肢体仓根目录）均为**由 `lingshu sync` 自动生成的产物**，禁止手动编辑。
+- **单一正文**：AI 规则正文只存在于 `AGENTS.md` 一份；`CLAUDE.md` 仅一行 `@AGENTS.md`（Claude Code 的 `@path` 导入语法），不重复正文。
 - **变更流程**：规则修改必须改动 `reference/rules/` 真源，再执行 `lingshu sync` 重新分发。
 - **CI 保障**：GitHub Actions 会校验入库产物与真源的一致性，防止漂移。
 

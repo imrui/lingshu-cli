@@ -5,6 +5,63 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [0.4.0] - 2026-09-20
+
+> **主题：规则正文只有一份 + 肢体仓分发**——`CLAUDE.md` 退化为一行 `@AGENTS.md` 引入；
+> 基线产物同时写进每个肢体仓根目录。
+
+### 背景
+
+两份基线产物 `CLAUDE.md` / `AGENTS.md` 此前内容完全相同（仅标题一行不同），
+同一段规则在仓库里存两份、改一处要同步两处、diff 里永远成对出现。Claude Code
+支持 `@path` 导入语法，`CLAUDE.md` 只需一行 `@AGENTS.md` 即可读到全部规则。
+
+另一处长期缺口：肢体仓是独立 git 仓，开发者直接打开 `*-server/` 时 Claude Code /
+Codex 向上找不到中枢的产物——规则对肢体仓形同不存在。
+
+### Added
+
+- **`pointer` 适配器类型**：固定内容的入口文件，不拼规则正文。内置 `claude-code`
+  改为此类型，产物恒为一行 `@AGENTS.md`。
+- **肢体仓分发**：`sync` / `init` / `upgrade` 的 `distribute` 同时把产物写入每个肢体仓
+  根目录（`src/core/limbs.mjs` 统一发现逻辑：`*-server` / `*-ui` / `*-web` / `*-app` /
+  `*-backend` / `*-frontend` / `*-mobile`，跟随符号链接）。中枢与每个肢体各自按
+  auto 规则选取目标工具；`--check` 一并校验并按 `app-server/AGENTS.md` 形式报路径。
+- **`sync --no-limbs`**：只写中枢根目录。
+- **`doctor`**：第 3 步逐肢体仓检查基线产物是否存在（缺失为提醒，不算错误）。
+
+### Fixed
+
+- **`init --limbs=name:url`** 此前用 `split(':')` 拆分，SSH 地址（`git@github.com:org/repo.git`）
+  与 Windows 绝对路径（`D:\...`）里的冒号会把 url 切碎，README 自带示例即无法克隆。
+  改为只按第一个冒号拆分。
+
+### Changed
+
+- **`init`**：肢体仓克隆（`--limbs`）提前到产物生成之前，克隆下来即带基线产物。
+- **`limb list`** 改用 `core/limbs.mjs`，与分发范围共用同一发现逻辑。
+- 模板 `README.md` / `_gitignore` / `reference/rules/lingshu-core.md` 措辞同步：
+  规则正文只在 `AGENTS.md`；`CLAUDE.md` 一行引入；肢体仓根目录同样带基线产物；
+  规则开头注明"在肢体仓内阅读时，根目录指中枢仓根目录"。
+
+### Migration
+
+- 存量项目跑一次 `lingshu sync`：`CLAUDE.md` 被重写为一行；肢体仓根目录新增
+  `AGENTS.md` + `CLAUDE.md`，进各肢体仓 `git add` 提交即可。
+- 肢体仓若不想收产物，用 `lingshu sync --no-limbs`。
+- 若肢体仓已激活个人工具（如 `.cursor/rules/` 存在），auto 模式会一并维护——
+  肢体仓 `.gitignore` 需自行忽略个人工具目录。
+
+### Tests
+
+- smoke 25 → 29（+4）：
+  - `sync：CLAUDE.md 恒为一行 @AGENTS.md · 规则正文只在 AGENTS.md`
+  - `sync：基线产物分发到肢体仓根目录，--check 一并校验`
+  - `sync --no-limbs：只写中枢，不碰肢体仓`
+  - `init --limbs 与 doctor：肢体仓克隆后即带基线产物，doctor 逐仓检查`
+- 修改 `init 创建零侵入项目结构` 断言：`CLAUDE.md` 从"含生成头部"改为"恒等一行"，
+  头部断言移到 `AGENTS.md`。
+
 ## [0.3.2] - 2026-07-03
 
 > **主题：可选 CI**——`.github/workflows/` 从默认拷贝改为按需加装。

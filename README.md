@@ -36,7 +36,7 @@ npm install -g @ruobai/lingshu
 npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git
 
 # 锁定版本
-npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.3.2
+npm install -g git+ssh://git@github.com/imrui/lingshu-cli.git#v0.4.0
 ```
 
 > 团队协作提示：v0.3 起派生仓不含 `package.json`，同步统一走全局 `lingshu sync`。**团队每位成员各全局安装一次**即可；CI 用 `npx -y @ruobai/lingshu` 临时调用。
@@ -52,7 +52,7 @@ lingshu init my-lingshu-app \
 
 > 把 `your-org` 替换为你的 GitHub 组织或用户名。
 
-一条命令完成：拷贝模板 → 注入项目身份 → 生成 `CLAUDE.md / AGENTS.md` → `git init` 与 remote → 安装 git hooks（内置写入 `.git/hooks/`）→ 克隆肢体仓。
+一条命令完成：拷贝模板 → 注入项目身份 → 克隆肢体仓 → 生成 `AGENTS.md` 与一行引入它的 `CLAUDE.md`（中枢与各肢体仓根目录）→ `git init` 与 remote → 安装 git hooks（内置写入 `.git/hooks/`）。
 
 ---
 
@@ -72,7 +72,7 @@ lingshu init my-lingshu-app \
 | `--no-install-hooks` | 跳过 git hooks 安装 |
 | `--template=<path>` | 自定义模板路径 |
 
-> 默认行为：init 仅生成入库的基线产物（`CLAUDE.md` / `AGENTS.md`）。其它 AI 工具（Cursor / Trae / Qoder / Antigravity）的本地产物，由开发者按需 `lingshu sync` 触发。这样首次 `git status` 干净、不污染仓库。
+> 默认行为：init 仅生成入库的基线产物（`AGENTS.md` + 一行引入它的 `CLAUDE.md`，中枢与各肢体仓根目录）。其它 AI 工具（Cursor / Trae / Qoder / Antigravity）的本地产物，由开发者按需 `lingshu sync` 触发。这样首次 `git status` 干净、不污染仓库。
 
 ### `lingshu sync`
 
@@ -84,13 +84,18 @@ lingshu init my-lingshu-app \
 |------|------|
 | _(无参数)_ | baseline + 已激活的 personal（推荐日常用） |
 | `--all` | 强制同步全部工具 |
-| `--baseline` | 仅同步基线工具（CLAUDE.md / AGENTS.md） |
+| `--baseline` | 仅同步基线工具（AGENTS.md + CLAUDE.md） |
 | `--only=<list>` | 仅同步指定工具（首次激活某工具时用） |
 | `--check` | 仅校验（CI 模式，不写文件），与上面任一组合使用 |
+| `--no-limbs` | 只写中枢根目录，不分发到肢体仓 |
+
+**肢体仓分发（v0.4）**：肢体仓是独立 git 仓，单独打开时读不到中枢的产物。`sync` 默认把产物按同一套规则写入每个肢体仓根目录（`*-server/`、`*-ui/` 等），`--check` 一并校验；产物随各肢体仓独立提交。真源仍只在中枢 `reference/rules/`。
+
+**规则正文只有一份**：`AGENTS.md` 承载全部规则正文；`CLAUDE.md` 恒为一行 `@AGENTS.md`（Claude Code 的 `@path` 导入语法），两者不再互为镜像。
 
 ### `lingshu doctor`
 
-架构健康检查：物理完整性（`reference/rules` + `reference/docs`）+ SSoT 真源（`ai-behavior.md` + `lingshu-core.md`）+ 基线产物（`CLAUDE.md` + `AGENTS.md`）。
+架构健康检查：物理完整性（`reference/rules` + `reference/docs`）+ SSoT 真源（`ai-behavior.md` + `lingshu-core.md`）+ 基线产物（`AGENTS.md` + `CLAUDE.md`，中枢与各肢体仓逐一检查）。
 
 ### `lingshu tool <subcmd>`
 
@@ -148,8 +153,8 @@ lingshu init my-lingshu-app \
 
 | 工具 | 适配器 | 默认角色 |
 |------|--------|---------|
-| Claude Code | `CLAUDE.md` | 基线 |
-| Codex / Agents | `AGENTS.md` | 基线 |
+| Claude Code | `CLAUDE.md`（仅一行 `@AGENTS.md` 引入） | 基线 |
+| Codex / Agents | `AGENTS.md`（规则正文） | 基线 |
 | Cursor | `.cursor/rules/*.mdc` | 个人 |
 | Trae | `.trae/rules/*.md` | 个人 |
 | Qoder | `.qoder/rules/*.md` | 个人 |
@@ -188,7 +193,7 @@ lingshu init my-lingshu-app \
 git clone git@github.com:imrui/lingshu-cli.git
 cd lingshu-cli
 
-npm test                       # 运行 smoke 测试（22 项）
+npm test                       # 运行 smoke 测试（29 项）
 node bin/lingshu.mjs --help    # 本地试运行
 npm link                       # 全局链接，方便调试
 ```

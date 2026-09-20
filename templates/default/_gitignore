@@ -43,8 +43,8 @@ out/
 # ==========================================
 #
 # 团队基线工具（入库，保证克隆即用）：
-#   - CLAUDE.md       (Claude Code 项目指令)
-#   - AGENTS.md       (Codex / 通用 Agents 指令)
+#   - AGENTS.md       (AI 规则正文 · Codex / 通用 Agents 入口)
+#   - CLAUDE.md       (Claude Code 入口 · 仅一行 @AGENTS.md 引入)
 #
 # 个人偏好工具（每位开发者本地生成，不污染 git）：
 .cursor/rules/

@@ -1,5 +1,5 @@
 /**
- * 适配器引擎（v0.3 零配置）
+ * 适配器引擎（v0.3 零配置 · v0.4 肢体分发）
  *
  * 设计：纯逻辑层，不直接打印日志（由 commands 层负责）。
  *
@@ -8,12 +8,17 @@
  *   2. SSoT 真源 = 约定发现 reference/rules/*.md（每个文件一个 source）
  *   3. directory 型适配器（cursor）的 frontmatter 来自规则文件自身的 frontmatter
  *   4. 合并顺序由规则文件 frontmatter 的 `order` 字段决定，缺省按文件名
- *   5. 逃生舱：存在 reference/.lingshu.json 时，可覆盖 adapters / baseline / sources
+ *   5. 逃生舱：存在 reference/.lingshu.json 时，可覆盖 adapters / baseline
+ *
+ * 分发范围（v0.4）：中枢根目录 + 每个肢体仓根目录（见 core/limbs.mjs）。
+ * 肢体仓是独立 git 仓，单独打开时读不到中枢的产物——因此基线产物按同一套
+ * 规则分发到每个肢体根目录，随各肢体仓独立提交。真源仍只在中枢 reference/rules/。
  */
 
 import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync, readdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { ADAPTERS, DEFAULT_BASELINE } from './registry.mjs';
+import { listLimbs } from './limbs.mjs';
 
 /** frontmatter 中仅供引擎使用、不输出到产物的保留字段 */
 const RESERVED_META = new Set(['order']);
@@ -97,14 +102,16 @@ function loadSource(projectRoot, srcPath) {
 }
 
 /**
- * 渲染单个适配器，返回产物列表。
+ * 渲染单个适配器，返回产物列表（`to` 相对 outRoot）。
+ * @param {string} options.projectRoot  真源所在（中枢根）
+ * @param {string} [options.outRoot]    产物落点（缺省 = projectRoot；分发到肢体仓时为肢体根）
  * @returns {Array<{to: string, content: string}>}
  */
-export function renderAdapter({ projectRoot, cfg, sources, dryRun = false }) {
+export function renderAdapter({ projectRoot, outRoot = projectRoot, cfg, sources, dryRun = false }) {
   const out = [];
 
   if (cfg.type === 'directory') {
-    const targetDir = join(projectRoot, cfg.target);
+    const targetDir = join(outRoot, cfg.target);
     if (existsSync(targetDir) && !dryRun) {
       // 清理与 sources 同名的旧产物（保护用户自定义文件）
       for (const f of readdirSync(targetDir)) {
@@ -127,6 +134,9 @@ export function renderAdapter({ projectRoot, cfg, sources, dryRun = false }) {
     const header = cfg.header ?? '';
     const body = (header ? header + sep : '') + parts.join(sep);
     out.push({ to: cfg.target, content: body });
+  } else if (cfg.type === 'pointer') {
+    // 固定内容的入口文件 · 不拼规则正文（CLAUDE.md → `@AGENTS.md`）
+    out.push({ to: cfg.target, content: cfg.content ?? '' });
   } else {
     throw new Error(`未知适配器类型: ${cfg.type}`);
   }
@@ -135,73 +145,85 @@ export function renderAdapter({ projectRoot, cfg, sources, dryRun = false }) {
 }
 
 /**
- * 全量分发（写入磁盘）。
- *
- * 选取目标工具的优先级：
+ * 选取某个落点目录的目标工具（中枢与每个肢体各自判定）：
  *   1) tools 显式列表       — 完全按列表（--only=...）
  *   2) baselineOnly=true     — 仅 baseline（init / sync --baseline）
  *   3) all=true              — 所有 adapter（sync --all）
- *   4) 默认（auto）          — baseline 必装 + 已存在产物的其它工具
+ *   4) 默认（auto）          — baseline 必装 + 该目录下已存在产物的其它工具
+ */
+function selectTargets({ dir, adapters, baseline, tools, baselineOnly, all }) {
+  if (tools) return tools;
+  if (baselineOnly) return baseline;
+  if (all) return Object.keys(adapters);
+  return Object.keys(adapters).filter((name) => {
+    if (baseline.includes(name)) return true;
+    const cfg = adapters[name];
+    return !!cfg && existsSync(join(dir, cfg.target));
+  });
+}
+
+/**
+ * 全量分发（写入磁盘）。
  *
- * @param {object} options
+ * @param {object}   options
  * @param {string}   options.projectRoot
  * @param {string[]} [options.tools]
  * @param {boolean}  [options.baselineOnly]
  * @param {boolean}  [options.all]
  * @param {boolean}  [options.check]
+ * @param {boolean}  [options.limbs=true]  是否同时分发到各肢体仓根目录
+ * @returns {{written: string[], drifted: string[], missing: string[], processed: object[]}}
+ *   路径一律相对中枢根（肢体产物形如 `app-server/AGENTS.md`）；
+ *   processed 每项带 scope（'root' 或肢体目录名）。
  */
-export function distribute({ projectRoot, tools, baselineOnly, all, check }) {
+export function distribute({ projectRoot, tools, baselineOnly, all, check, limbs = true }) {
   const { sources, adapters, baseline } = resolveProject(projectRoot);
 
-  let targets;
-  if (tools) {
-    targets = tools;
-  } else if (baselineOnly) {
-    targets = baseline;
-  } else if (all) {
-    targets = Object.keys(adapters);
-  } else {
-    // auto：baseline + 已存在产物的其它工具
-    targets = Object.keys(adapters).filter((name) => {
-      if (baseline.includes(name)) return true;
-      const cfg = adapters[name];
-      return existsSync(join(projectRoot, cfg.target));
-    });
+  const scopes = [{ scope: 'root', dir: projectRoot, prefix: '' }];
+  if (limbs) {
+    for (const l of listLimbs(projectRoot)) {
+      scopes.push({ scope: l.name, dir: l.path, prefix: l.name + '/' });
+    }
   }
 
   const result = { written: [], drifted: [], missing: [], processed: [] };
 
-  for (const tool of targets) {
-    const cfg = adapters[tool];
-    if (!cfg) {
-      result.processed.push({ tool, status: 'unknown' });
-      continue;
-    }
-    const items = renderAdapter({ projectRoot, cfg, sources, dryRun: !!check });
-    const itemResults = [];
-    for (const { to, content } of items) {
-      const fullTarget = join(projectRoot, to);
-      if (check) {
-        if (!existsSync(fullTarget)) {
-          result.missing.push(to);
-          itemResults.push({ to, status: 'missing' });
-        } else {
-          const existing = readFileSync(fullTarget, 'utf8');
-          if (existing !== content) {
-            result.drifted.push(to);
-            itemResults.push({ to, status: 'drifted' });
-          } else {
-            itemResults.push({ to, status: 'ok' });
-          }
-        }
-      } else {
-        mkdirSync(dirname(fullTarget), { recursive: true });
-        writeFileSync(fullTarget, content, 'utf8');
-        result.written.push(to);
-        itemResults.push({ to, status: 'written' });
+  for (const { scope, dir, prefix } of scopes) {
+    const targets = selectTargets({ dir, adapters, baseline, tools, baselineOnly, all });
+    for (const tool of targets) {
+      const cfg = adapters[tool];
+      if (!cfg) {
+        // 未知工具名只在中枢报一次，肢体不重复
+        if (scope === 'root') result.processed.push({ scope, tool, status: 'unknown' });
+        continue;
       }
+      const items = renderAdapter({ projectRoot, outRoot: dir, cfg, sources, dryRun: !!check });
+      const itemResults = [];
+      for (const { to: rel, content } of items) {
+        const to = prefix + rel;
+        const fullTarget = join(dir, rel);
+        if (check) {
+          if (!existsSync(fullTarget)) {
+            result.missing.push(to);
+            itemResults.push({ to, status: 'missing' });
+          } else {
+            const existing = readFileSync(fullTarget, 'utf8');
+            if (existing !== content) {
+              result.drifted.push(to);
+              itemResults.push({ to, status: 'drifted' });
+            } else {
+              itemResults.push({ to, status: 'ok' });
+            }
+          }
+        } else {
+          mkdirSync(dirname(fullTarget), { recursive: true });
+          writeFileSync(fullTarget, content, 'utf8');
+          result.written.push(to);
+          itemResults.push({ to, status: 'written' });
+        }
+      }
+      result.processed.push({ scope, tool, baseline: baseline.includes(tool), items: itemResults });
     }
-    result.processed.push({ tool, baseline: baseline.includes(tool), items: itemResults });
   }
 
   return result;

@@ -86,7 +86,31 @@ export default async function init({ args, pkgRoot }) {
   });
   log.ok(`项目身份已注入: ${c.bold(finalName)}`);
 
-  // Step 3: 生成产物
+  // Step 3: 拉取肢体仓（先于产物生成 · 基线产物要分发到每个肢体根目录）
+  if (opts.limbs) {
+    log.step('克隆肢体仓');
+    const limbs = parseList(opts.limbs);
+    for (const limb of limbs) {
+      // 只按第一个冒号拆：url 本身可含冒号（git@host:org/repo.git · Windows 盘符 D:\...）
+      const sep = limb.indexOf(':');
+      const name = sep > 0 ? limb.slice(0, sep).trim() : '';
+      const url = sep > 0 ? limb.slice(sep + 1).trim() : '';
+      if (!name || !url) {
+        log.warn(`格式错误（应为 name:url）: ${limb}`);
+        continue;
+      }
+      const limbPath = join(targetDir, name);
+      try {
+        log.hint(`  克隆 ${name} → ${url}`);
+        gitClone(url, limbPath);
+        log.ok(`  ${name}`);
+      } catch (e) {
+        log.error(`  ${name} 克隆失败: ${e.message}`);
+      }
+    }
+  }
+
+  // Step 4: 生成产物（中枢 + 各肢体仓根目录）
   //   默认 baseline-only（claude-code/codex）；--all-tools 含个人工具；--tools 指定集合
   const allTools = !!flags['all-tools'];
   const tools = opts.tools ? parseList(opts.tools) : undefined;
@@ -122,27 +146,6 @@ export default async function init({ args, pkgRoot }) {
     const { installed, skipped } = installHooks(targetDir);
     if (skipped) log.warn('非 git 仓库，跳过 hooks 安装');
     else log.ok(`已安装 git hooks: ${installed.join(', ')}`);
-  }
-
-  // Step 7: 拉取肢体仓
-  if (opts.limbs) {
-    log.step('克隆肢体仓');
-    const limbs = parseList(opts.limbs);
-    for (const limb of limbs) {
-      const [name, url] = limb.split(':').map(s => s.trim());
-      if (!name || !url) {
-        log.warn(`格式错误（应为 name:url）: ${limb}`);
-        continue;
-      }
-      const limbPath = join(targetDir, name);
-      try {
-        log.hint(`  克隆 ${name} → ${url}`);
-        gitClone(url, limbPath);
-        log.ok(`  ${name}`);
-      } catch (e) {
-        log.error(`  ${name} 克隆失败: ${e.message}`);
-      }
-    }
   }
 
   // 完成

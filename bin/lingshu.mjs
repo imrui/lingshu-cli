@@ -40,11 +40,11 @@ ${pkg.description}  v${pkg.version}
                              --all-tools（含 personal 工具产物），--no-git, --no-install-hooks
                        示例: lingshu init my-lingshu-app --tools=claude-code,codex
 
-  sync                 重新分发规则到本地 AI 工具
+  sync                 重新分发规则到本地 AI 工具（中枢 + 各肢体仓根目录）
                        默认: 同步 baseline + 已存在产物的 personal
-                       选项: --check, --baseline, --all, --only=<tools>
+                       选项: --check, --baseline, --all, --only=<tools>, --no-limbs
 
-  doctor               架构健康检查（物理结构 + SSoT 真源 + 一致性）
+  doctor               架构健康检查（物理结构 + SSoT 真源 + 基线产物，含肢体仓）
 
   tool <subcmd>        管理 AI 工具产物的 git 追踪状态
                        子命令: list | track <tool> | untrack <tool>
