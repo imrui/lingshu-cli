@@ -5,6 +5,13 @@
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Changed
+
+- **CI**：npm 发布改为 Trusted Publishing（OIDC），不再依赖会过期的 `NPM_TOKEN`；
+  provenance 由 npm 自动附带。前置为在 npmjs.com 为包配置 Trusted Publisher。
+
 ## [0.4.0] - 2026-09-20
 
 > **主题：规则正文只有一份 + 肢体仓分发**——`CLAUDE.md` 退化为一行 `@AGENTS.md` 引入；
